@@ -1,0 +1,44 @@
+<!--
+    ChurchClocks basic element server for ProPresenter and other services
+    This will serve a page based on an parameter index.html?type="type"
+
+    See https://github.com/Kardinia-Church/Church-Clocks/blob/master/webServerREADME.md for more information
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Church Clocks</title>
+        <link rel="stylesheet" href="./style.css">
+        <script src="./script.js"></script>
+    </head>
+    <body id="body">
+        <!-- Default unsupported div -->
+        <div id="unsupported" class="outerDiv" style="border: 10vh solid red;">
+            <div>
+                <h1>Unsupported type</h1>
+                <h1><a href="https://github.com/Kardinia-Church/Church-Clocks/blob/master/webServerREADME.md">See Documentation</a></h1>
+            </div>
+        </div>
+
+        <!-- Single line clock -->
+        <div id="singleLineClock" class="outerDiv" style="display: none">
+            <div>
+                <h1 id="singleLineClockValue">--:--:--</h1>
+            </div>
+        </div>
+
+        <!-- Single line text -->
+        <div id="singleLineText" class="outerDiv" style="display: none">
+            <div>
+                <h1 id="singleLineTextValue">-</h1>
+            </div>
+        </div>
+
+        <!-- Multi line text -->
+        <div id="multiLineText" class="outerDiv" style="display: none">
+            <div id="multiLineTextValue">
+                <h1>-</h1>
+            </div>
+        </div>
+    </body>
+</html>

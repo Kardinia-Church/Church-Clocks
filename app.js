@@ -13,13 +13,18 @@ app.js: Main entry point
 
 const {EventEmitter} = require("events");
 const WebSocket = require('ws');
+const http = require('http');
+const fs = require("fs")
+const url = require('url'); 
 module.exports = class ChurchClocks extends EventEmitter{
-    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955) {
+    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955, enableWebServer = false, webServerPort = 80) {
         super();
         var object = this;
 
         this.enableWebSocket = enableWebSocket;
+        this.enableWebServer = enableWebServer;
         if(this.enableWebSocket) {
+            object.emit("information", object.generateInformationEvent("application", "websocket", "Websocket enabled"));
             this.connections = [];
             this.wsPassword = webSocketPassword;
             this.wss = new WebSocket.Server({ port: webSocketPort });
@@ -105,6 +110,32 @@ module.exports = class ChurchClocks extends EventEmitter{
                 });
             });
         }
+
+        //If webserver is enabled set it up
+        if(this.enableWebServer == true) {
+            object.emit("information", object.generateInformationEvent("application", "webserver", "Webserver enabled"));
+            http.createServer(function (request, response) {
+                var path = url.parse(request.url).pathname; 
+
+                if(path == "/"){path = "index.html";}
+
+                fs.readFile("./web/" + path, function(error, data) {  
+                    if (error) {  
+                        response.writeHead(404);  
+                        response.write("404: Not found");  
+                        response.end();  
+                    }
+                    else {
+                        if(path.includes(".css")){response.writeHead(200, { "Content-Type": "text/css"});}
+                        else if(path.includes(".js")){response.writeHead(200, { "Content-Type": "text/javascript"});}
+                        else{response.writeHead(200, { "Content-Type": "text/html"});}
+                        response.write(data);  
+                        response.end();
+                    }
+                });
+            }).listen(webServerPort);
+        }
+
         this.functions = require("./functions/functions.js").getFunctions();
 
         //Setup functions

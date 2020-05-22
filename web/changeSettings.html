@@ -1,0 +1,151 @@
+
+<html>
+    <center>
+        <h1>Currently not supported!</h1>
+
+        <h1 style="margin: 3vw">Church Clocks Configuration Editor</h1>
+        <hr>
+        <h2>Update Pro Presenter Settings</h2>
+        <label for="host">Host</label><br>
+        <input type="text" id="pphost" name="host"><br><br>
+        <label for="port">Port</label><br>
+        <input type="text" id="ppport" name="port" value="49877"><br><br>
+        <label for="password">Password</label><br>
+        <input type="password" id="pppassword" name="password"><br><br>
+        <button id="setpp">Set</button><br>
+        <hr>
+        <h2>Update Pro Video Player Settings</h2>
+
+        <label for="host">Host</label><br>
+        <input type="text" id="pvphost" name="host"><br><br>
+
+        <label for="port">Port</label><br>
+        <input type="text" id="pvpport" name="port" value="49414"><br><br>
+
+        <label for="api">API Location</label><br>
+        <input type="text" id="pvpapilocation" name="api" value="/api/0/"><br><br>
+
+        <label for="auth">Auth Token</label><br>
+        <input type="text" id="pvpauth" name="auth" value=""><br><br>
+
+        <button id="setpvp">Set</button><br>
+
+        <hr>
+        <h2>Update Elvanto Settings</h2>
+        <label for="user">User</label><br>
+        <input type="text" id="elvantoUser" name="user"><br><br>
+        <label for="password">Password</label><br>
+        <input type="password" id="elvantoPassword" name="password"><br><br>
+        <button id="setElvanto">Set</button><br>
+        <hr>
+
+
+        <button onclick="sendStatusCommand('restart');">Restart Server</button>
+        <button onclick="sendStatusCommand('stop');">Stop Server</button>
+        <button onclick="sendStatusCommand('refresh');">Refresh Clients</button><br>
+        <hr>
+
+
+        <button style="margin-top: 3vh;" onclick="window.location.href = '/admin.html'"">Back</button>
+    </center>
+
+   <script>
+        var webSocket = new WebSocket("ws://" + window.location.host.split(':')[0] + ":9955");
+
+        //Set proPresenter
+        document.getElementById("setpp").onclick = function() {
+            var host = document.getElementById("pphost").value;
+            var port = document.getElementById("ppport").value;
+            var password = document.getElementById("pppassword").value;
+
+            if(host.length < 5 || port < 1) {
+                alert("Please double check your entry");
+            }
+            else {
+                //Request password
+                var authPassword = prompt("Auth Password", "");
+                send(JSON.stringify({"type": "proPresenter", "host": host, "port": port, "pass": password, "password": authPassword}));
+            }
+        }
+
+        
+        //Set Pro Video Player
+        document.getElementById("setpvp").onclick = function() {
+            var host = document.getElementById("pvphost").value;
+            var port = document.getElementById("pvpport").value;
+            var apiLocation = document.getElementById("pvpapilocation").value;
+            var authToken = document.getElementById("pvpauth").value;
+
+            if(host.length < 5 || port < 1 || apiLocation < 1 || authToken < 5) {
+                alert("Please double check your entry");
+            }
+            else {
+                //Request password
+                var authPassword = prompt("Auth Password", "");
+                send(JSON.stringify({"type": "proVideoPlayer", "host": host, "port": port, "apiLocation": apiLocation, "authToken": authToken, "password": authPassword}));
+            }
+        }
+
+        //Set Pro Video Player
+        document.getElementById("setElvanto").onclick = function() {
+            var user = document.getElementById("elvantoUser").value;
+            var password = document.getElementById("elvantoPassword").value;
+
+            if(user.length < 1 || password.length < 1) {
+                alert("Please double check your entry");
+            }
+            else {
+                //Request password
+                var authPassword = prompt("Auth Password", "");
+                send(JSON.stringify({"type": "elvantoSettings", "user": user, "pass": password, "password": authPassword}));
+            }
+        }
+
+
+        webSocket.onmessage = function(message) {
+            message = JSON.parse(message.data);
+            switch(message.type) {
+                case "status": {
+                    switch(message.command) {
+                        case "success": {
+                            alert("Completed successfully");
+                            break;
+                        }
+                        case "error": {
+                            switch(message.value) {
+                                case "invaid password": {
+                                    alert("Password Incorrect");
+                                    break;
+                                }
+                                default: {
+                                    alert("Sorry something went wrong: " + message.value);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                
+            }
+        }
+
+        function sendStatusCommand(command) {
+            var authPassword = prompt("Auth Password", "");
+            send(JSON.stringify({"type": "status", "command": command,"password": authPassword}));
+        }
+
+        //Send a message
+        function send(message) {
+            if(webSocket.readyState != webSocket.OPEN) {
+                console.log("Websocket is not open it is in " + webSocket.readyState);
+                alert("Could not send the message because we are disconnected.");
+                location.reload();
+            }
+            else {
+                webSocket.send(message);
+            }
+        }
+    </script> 
+
+</html>

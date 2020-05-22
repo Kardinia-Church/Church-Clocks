@@ -18,7 +18,7 @@ function writeDefaults() {
 
     settings += "* Web Server Settings *\n";
     settings += "webServerEnabled=true\n";
-    settings += "webServerPort=7503\n";
+    settings += "webServerPort=80\n";
 
     fs.writeFileSync("applicationSettings.txt", settings, "utf-8", function (err) {
         if(err){console.log("Failed to write default settings file");}
@@ -40,6 +40,10 @@ function readSettings(callback) {
             webServerEnabled =  data.toString().split("webServerEnabled=")[1].split("\n")[0] == "true";
             webServerPort = parseInt(data.toString().split("webServerPort=")[1].split("\n")[0]);
 
+            if(webServerEnabled == true) {
+                webSocketPort = 9955;
+                console.log("Websocket port forced to 9955 as webServer is enabled!");
+            }
 
             if(webSocketEnabled === undefined || webSocketPassword === undefined || webSocketPort === undefined || webServerEnabled === undefined || webServerPort === undefined) {
                 throw "invalid config";
@@ -53,7 +57,7 @@ function readSettings(callback) {
 }
 
 readSettings(function(success) {
-    var clocks = new churchClocks(webSocketEnabled, webSocketPassword, webSocketPort);
+    var clocks = new churchClocks(webSocketEnabled, webSocketPassword, webSocketPort, webServerEnabled, webServerPort);
     clocks.on("connectionStatus", function(message) {
         console.log("Connection Update [" + message.function + "]: " + message.state);
     });

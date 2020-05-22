@@ -25,7 +25,7 @@ Elvanto can be controlled by sending
 {
     "function": "elvanto",
     "command": "setService",
-    "value": "?id=joijio6-hiuht-uhi6-hiuhiu65-hiuhiu5&time_id=wifuwehfiweiufh-hi7-hi65-iuhiuhiuhiu65"
+    "value": "The elvanto live url"
 }
 ```
 Commands are as follows
@@ -91,7 +91,7 @@ Elvanto by default supports setting the service and clearing the service with th
     "password": "password if set in the general settings file",
     "function": "elvanto",
     "command": "setService / clearService",
-    "value": "The elvanto service id after the /live/ in the url"
+    "value": "The elvanto live url"
 }
 Note please use ```JSON.stringify(message)``` to send messages and ```JSON.parse(messages)``` to parse the recieved messages
 

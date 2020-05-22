@@ -8,7 +8,6 @@ module.exports = function() {
     this.updaterInterval = undefined;
     this.run = false;
 
-    this.elvantoURL = "";
     this.serviceId = "";
     this.username = "";
     this.password = "";
@@ -30,9 +29,8 @@ module.exports = function() {
 
         //Open url and navigate to the current live page
         try {
-            //https://kardiniachurch.elvanto.com.au/live/?id=' + object.serviceId + '&time_id=' + object.serviceTime
             object.parent.emit("information", object.parent.generateInformationEvent(object.function, "grabber", "Attempting to login to Elvanto"));
-            await page.goto(object.elvantoURL + "live/" + object.serviceId, { waitUntil: 'networkidle0' });
+            await page.goto(object.serviceId, { waitUntil: 'networkidle0' });
             await page.type('#member_username', object.username);
             await page.type('#member_password', object.password);
             await Promise.all([
@@ -71,6 +69,10 @@ module.exports = function() {
                     object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
                     await delay(500);
                 }
+
+                //When exiting send undefined
+                object.storedInformation = {};
+                object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
             }
             else {
                 //Failed to login
@@ -144,10 +146,9 @@ module.exports = function() {
     }
 
     //Write the current settings to file
-    this.writeSettings = function(elvantoURL, user, password, callback, puppeteerExecutablePath = "") {
+    this.writeSettings = function(user, password, callback, puppeteerExecutablePath = "") {
         var object = this;
         var settings = "Church Clocks Elvanto Configuration File\n\n";
-        settings += "elvantoURL=" + elvantoURL + "\n";
         settings += "username=" + user + "\n";
         settings += "password=" + password + "\n";
         settings += "puppeteerExecutablePath=" + puppeteerExecutablePath + "\n";    
@@ -171,13 +172,12 @@ module.exports = function() {
         try {
             var data = fs.readFileSync("./settings/elvantoSettings.txt");
             try {
-                object.elvantoURL = data.toString().split("elvantoURL=")[1].split("\n")[0];
                 object.username = data.toString().split("username=")[1].split("\n")[0];
                 object.password = data.toString().split("password=")[1].split("\n")[0];
                 object.puppeteerExecutablePath =  data.toString().split("puppeteerExecutablePath=")[1].split("\n")[0];
 
 
-                if(object.elvantoURL === undefined || object.username === undefined || object.password === undefined || object.puppeteerExecutablePath === undefined){
+                if(object.username === undefined || object.password === undefined || object.puppeteerExecutablePath === undefined){
                     throw "invalid settings read";
                 }
 
@@ -186,7 +186,7 @@ module.exports = function() {
             }
             catch(e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<YOUR_ELVANTO_URL_HERE eg http://church.elvanto.com/>", "<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>"); 
+                object.writeSettings("<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>"); 
                 object.readSettings(object, callback);
             }
         }
@@ -194,7 +194,7 @@ module.exports = function() {
             switch(e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<YOUR_ELVANTO_HOME_URL_HERE eg http://church.elvanto.com/>", "<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>", function(success) {
+                    object.writeSettings("<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>", function(success) {
                         if(success == true) {
                             object.readSettings(object, callback);
                         }
