@@ -15,6 +15,8 @@ module.exports = function() {
 
     //Main web grabber.
     async function main(object) {
+        object.run = false;
+
         //Open browser
         object.parent.emit("information", object.parent.generateInformationEvent(object.function, "grabber", "Opened grabber"));
 
@@ -59,8 +61,10 @@ module.exports = function() {
                             object.storedInformation.nextPlanItem = object.storedInformation.servicePlanItems[Object.keys(object.storedInformation.servicePlanItems)[position]];
 
                             //If it's not an item grab the next one (titles are included as items)
-                            while(object.storedInformation.nextPlanItem.start === undefined && position < Object.keys(object.storedInformation.servicePlanItems).length) {
-                                object.storedInformation.nextPlanItem = object.storedInformation.servicePlanItems[Object.keys(object.storedInformation.servicePlanItems)[position++]];
+                            if(object.storedInformation.nextPlanItem !== undefined) {
+                                while(object.storedInformation.nextPlanItem.start === undefined && position < Object.keys(object.storedInformation.servicePlanItems).length) {
+                                    object.storedInformation.nextPlanItem = object.storedInformation.servicePlanItems[Object.keys(object.storedInformation.servicePlanItems)[position++]];
+                                }
                             }
                             break;
                         }

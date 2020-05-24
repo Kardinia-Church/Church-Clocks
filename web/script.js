@@ -2,6 +2,7 @@ window.onload = function () {
     var ws = undefined;
     var connected = true;
     var params = new URLSearchParams(window.location.search);
+    var reconnectAttemper = undefined;
     var flasher = undefined;
 
     //Set the element based off the function
@@ -30,8 +31,8 @@ window.onload = function () {
         clearInterval(flasher);
         if(connected == false) {
             flasher = setInterval(function() {
-                if(document.getElementById("body").style.border != "5vh solid red") {
-                    document.getElementById("body").style.border = "5vh solid red";
+                if(document.getElementById("body").style.backgroundColor != "1vw solid red") {
+                    document.getElementById("body").style.border = "1vw solid red";
                 }     
                 else {
                     document.getElementById("body").style.border = "none";
@@ -56,12 +57,14 @@ window.onload = function () {
         ws.onerror = function() {
             console.log("Websocket Error");
             connectionChanged(false);
-            setTimeout(function(){openSocket()}, 5000);
+            clearTimeout(reconnectAttemper);
+            reconnectAttemper = setTimeout(function(){openSocket()}, 5000);
         }
 
         ws.onclose = function() {
             connectionChanged(false);
-            setTimeout(function(){openSocket()}, 5000);
+            clearTimeout(reconnectAttemper);
+            reconnectAttemper = setTimeout(function(){openSocket()}, 5000);
         }
 
         //On WS open
@@ -93,10 +96,23 @@ window.onload = function () {
                     switch(params.get("type")) {
                         case "elvanto_countdown_clock": {
                             if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
-                                if(isEmpty(msg.value.value) == false) {
+                                if(isEmpty(msg.value.value) == false && msg.value.value.timeLeftSec !== undefined && msg.value.value.timeLeftSec !== false) {
+
+                                    //Set the colour
+                                    if(msg.value.value.timeLeftSec > 30) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning";
+                                    }
+                                    else if(msg.value.value.timeLeftSec > 0) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-almost";
+                                    }
+                                    else if(msg.value.value.timeLeftSec < 0) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-over";
+                                    }
+
                                     document.getElementById("singleLineClockValue").innerHTML = convertTime(msg.value.value.timeLeftSec);
                                 }
                                 else {
+                                    document.getElementById("singleLineClockValue").className = "timerPaused";
                                     document.getElementById("singleLineClockValue").innerHTML = "--:--:--";
                                 }
                             }
@@ -104,18 +120,18 @@ window.onload = function () {
                         }
                         case "elvanto_currentitem": {
                             if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
-                                if(isEmpty(msg.value.value) == false  && msg.value.value.nextPlanItem !== undefined) {
+                                if(isEmpty(msg.value.value) == false && msg.value.value.currentPlanItem !== undefined && msg.value.value.currentPlanItem !== false) {
                                     document.getElementById("singleLineTextValue").innerHTML = msg.value.value.currentPlanItem.name;
                                 }
                                 else {
-                                    document.getElementById("multiLineTextValue").innerHTML = "-";
+                                    document.getElementById("singleLineTextValue").innerHTML = "-";
                                 }
                             }
                             break;
                         }
                         case "elvanto_nextitem": {
                             if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
-                                if(isEmpty(msg.value.value) == false && msg.value.value.nextPlanItem !== undefined) {
+                                if(isEmpty(msg.value.value) == false && msg.value.value.nextPlanItem !== undefined && msg.value.value.nextPlanItem !== false) {
                                     document.getElementById("singleLineTextValue").innerHTML = msg.value.value.nextPlanItem.name;
                                 }
                                 else {
@@ -126,7 +142,7 @@ window.onload = function () {
                         }
                         case "elvanto_items": {
                             if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
-                                if(isEmpty(msg.value.value) == false && msg.value.value.nextPlanItem !== undefined && msg.value.value.currentPlanItem !== undefined) {
+                                if(isEmpty(msg.value.value) == false && msg.value.value.currentPlanItem !== undefined && msg.value.value.currentPlanItem !== false && msg.value.value.nextPlanItem !== undefined && msg.value.value.nextPlanItem !== false) {
                                     document.getElementById("multiLineTextValue").innerHTML = "";
                                     document.getElementById("multiLineTextValue").innerHTML += "<h1>" + msg.value.value.currentPlanItem.name + "</h1>";
                                     document.getElementById("multiLineTextValue").innerHTML += "<h1>" + msg.value.value.nextPlanItem.name + "</h1>";
