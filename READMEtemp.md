@@ -1,14 +1,45 @@
 # Church Clocks
  A nodejs script which is designed to provide a websocket connection to gain information from ProPresenter, ProVideoPlayer, and Elvanto
 
-## Reference
-
-## How to setup
+# How to setup
 * First install nodejs and npm on your machine
-* Type ```npm install church-clocks``` to install the module
-* If you want to use this source use ```const churchClocks = require("church-clocks");``` to include it in your project
-* If you wish to run this module see the included script to run it! (Coming Soon)
+* Type ```npm install -g church-clocks --unsafe_perm=true``` to install the module
 
+## Running in your own script
+* Include the module using ```const churchClocks = require("church-clocks");```. See an example below to get it working!
+
+## Running standalone as a webserver
+* 
+
+
+# Using as a standalone webserver
+This module includes a standalone script which exposes a websocket and/or a webserver for accesing the clocks
+
+## WebSocket
+## Connecting
+The websocket if enabled can be accessed at ```<YOUR_IP>:9955``` and when connected should output all supported events which can be seen below in the API reference.
+
+## Command format
+In general the command format can be seen in the API reference, however the WebSocket is formatted differently.
+```
+{
+    "event": "The event that is being outputted",
+    "value": "The value of that event
+}
+```
+So as an example a supported function would come in as follows:
+{
+    "event": "functionEvent",
+    "value": 
+    {
+    }
+}
+```
+
+
+
+
+# Using in a custom script
 ## Controlling Functions
 Supported functions can be sent messages to control them. The typical format is as follows:
 ```
