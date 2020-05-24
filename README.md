@@ -26,6 +26,7 @@ The following is the format that is expected to come from the WebSocket to your 
 }
 ```
 So as an example a supported function would come in as follows:
+```
 {
     "event": "functionEvent",
     "value": {
