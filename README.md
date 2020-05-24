@@ -112,11 +112,13 @@ In general all functions will output information as events which can be seen bel
 }
 ```
 * ```information``` information events
+```
 {
     "function": "the function name",
     "type": "the type of command being sent",
     "value": "the value" 
 }
+```
 
 ## Controlling functions
 Functions can be sent requests by using the ```sendToFunctions(message)``` function and passing a message as follows:
