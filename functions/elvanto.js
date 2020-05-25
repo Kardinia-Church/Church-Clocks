@@ -1,5 +1,4 @@
 const fs = require("fs");
-const os = require('os');
 const puppeteer = require('puppeteer');
 module.exports = function() {
     this.function = "elvanto";
@@ -13,6 +12,7 @@ module.exports = function() {
     this.username = "";
     this.password = "";
     this.puppeteerExecutablePath = "";
+    this.filePath = "";
 
     //Main web grabber.
     async function main(object) {
@@ -137,6 +137,10 @@ module.exports = function() {
         }
     }
 
+    this.setFilePath = function(filePath) {
+        this.filePath = filePath;
+    }
+
     //Attempt to setup
     this.setup = function(parent) {
         this.parent = parent;
@@ -150,6 +154,15 @@ module.exports = function() {
         this.readSettings();
     }
 
+    //Write the settings file though a prompt (used for the install script)
+    this.writeSettingsPrompt = function() {
+        var object = this;
+        callback = function(values, callback) {
+            object.writeSettings(values[0], values[1], callback, values[2]);
+        }
+        return {"values": ["Username", "Password", "puppeteerExecutablePath (default empty)"], "callback": callback};
+    }
+
     //Write the current settings to file
     this.writeSettings = function(user, password, callback, puppeteerExecutablePath = "") {
         var object = this;
@@ -157,13 +170,8 @@ module.exports = function() {
         settings += "username=" + user + "\n";
         settings += "password=" + password + "\n";
         settings += "puppeteerExecutablePath=" + puppeteerExecutablePath + "\n";    
-
-        //Check the directory exists
-        if (!fs.existsSync("./settings")){
-            fs.mkdirSync("./settings");
-        }
         
-        fs.writeFileSync("./settings/elvantoSettings.txt", settings, "utf-8", function (err) {
+        fs.writeFileSync(this.filePath + "elvantoSettings.txt", settings, "utf-8", function (err) {
             if(err){object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if(callback){callback(false);}}
             else {
                 object.parent.emit("information", object.parent.generateInformationEvent(object.function, "information", "Settings file was written successfully"));
@@ -173,10 +181,9 @@ module.exports = function() {
       },
 
     this.readSettings = function(callback) {
-        console.log(os.homedir() + "/.church-clocks/");
         var object = this;
         try {
-            var data = fs.readFileSync("./settings/elvantoSettings.txt");
+            var data = fs.readFileSync(this.filePath + "elvantoSettings.txt");
             try {
                 object.username = data.toString().split("username=")[1].split("\n")[0];
                 object.password = data.toString().split("password=")[1].split("\n")[0];

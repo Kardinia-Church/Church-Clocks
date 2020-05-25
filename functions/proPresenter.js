@@ -86,24 +86,42 @@ module.exports = function() {
         this.readSettings();
         
         var socketAddr = "ws://" + object.host + ":" + object.port + "/stagedisplay";
-        object.ws = new WebSocket(socketAddr);
-        object.ws.on("open", function(event) {
-            object.send({"pwd":object.password,"ptl":610,"acn":"ath"});
-        });
+        try { 
+            object.ws = new WebSocket(socketAddr);
+            object.ws.on("open", function(event) {
+                object.send({"pwd":object.password,"ptl":610,"acn":"ath"});
+            });
 
-        object.ws.on("message", function(message) {
-            object.handleIncoming(JSON.parse(message));
-        });
-        
-        object.ws.on("close", function(event) {
-            object.connectionChange(false);
-            object.storedInformation = {};
-        });
+            object.ws.on("message", function(message) {
+                object.handleIncoming(JSON.parse(message));
+            });
+            
+            object.ws.on("close", function(event) {
+                object.connectionChange(false);
+                object.storedInformation = {};
+            });
 
-        object.ws.on("error", function(error) {
-            object.connectionChange(false, true);
-            object.storedInformation = {};
-        });
+            object.ws.on("error", function(error) {
+                object.connectionChange(false, true);
+                object.storedInformation = {};
+            });
+        }
+        catch(e) {
+            this.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to open WebSocket: " + e));
+        }
+    }
+
+    this.setFilePath = function(filePath) {
+        this.filePath = filePath;
+    }
+
+    //Write the settings file though a prompt (used for the install script)
+    this.writeSettingsPrompt = function() {
+        var object = this;
+        callback = function(values, callback) {
+            object.writeSettings(values[0], values[1], values[2], callback);
+        }
+        return {"values": ["Host", "Port", "Password"], "callback": callback};
     }
 
     //Write the current settings to file
@@ -114,12 +132,7 @@ module.exports = function() {
         settings += "port=" + port + "\n";
         settings += "password=" + password + "\n";
 
-        //Check the directory exists
-        if (!fs.existsSync("./settings")){
-            fs.mkdirSync("./settings");
-        }
-        
-        fs.writeFileSync("./settings/proPresenterSettings.txt", settings, "utf-8", function (err) {
+        fs.writeFileSync(this.filePath + "proPresenterSettings.txt", settings, "utf-8", function (err) {
             if(err){object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if(callback){callback(false);}}
             else {
                 object.parent.emit("information", object.parent.generateInformationEvent(object.function, "information", "Settings file was written successfully"));
@@ -131,7 +144,7 @@ module.exports = function() {
     this.readSettings = function(callback) {
         var object = this;
         try {
-            var data = fs.readFileSync("./settings/proPresenterSettings.txt");
+            var data = fs.readFileSync(this.filePath + "proPresenterSettings.txt");
             try {
                 object.host = data.toString().split("host=")[1].split("\n")[0];
                 object.port = data.toString().split("port=")[1].split("\n")[0];

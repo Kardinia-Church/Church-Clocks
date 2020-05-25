@@ -1,6 +1,7 @@
 const request = require("request");
 const fs = require("fs");
 const os = require('os');
+const filePath = os.homedir() + "/.church-clocks/functionSettings/proVideoPlayer/";
 module.exports = function() {
     this.function = "proVideoPlayer";
     this.parent = undefined;
@@ -107,6 +108,19 @@ module.exports = function() {
         }, 500);
     }
 
+    this.setFilePath = function(filePath) {
+        this.filePath = filePath;
+    }
+
+    //Write the settings file though a prompt (used for the install script)
+    this.writeSettingsPrompt = function() {
+        var object = this;
+        callback = function(values, callback) {
+            object.writeSettings(values[0], values[1], values[2], values[3], callback);
+        }
+        return {"values": ["Host", "Port", "API Location (default /api/0/)", "Auth Token (or Empty)"], "callback": callback};
+    }
+
     //Write the current settings to file
     this.writeSettings = function(host, port, apiLocation, authToken, callback) {
         var object = this;
@@ -117,12 +131,7 @@ module.exports = function() {
         settings += "apiLocation=" + apiLocation + "\n";
         settings += "authToken=" + authToken + "\n";  
 
-        //Check the directory exists
-        if (!fs.existsSync("./settings")){
-            fs.mkdirSync("./settings");
-        }
-        
-        fs.writeFileSync("./settings/proVideoPlayerSettings.txt", settings, "utf-8", function (err) {
+        fs.writeFileSync(this.filePath + "proVideoPlayerSettings.txt", settings, "utf-8", function (err) {
             if(err){object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if(callback){callback(false);}}
             else {
                 object.parent.emit("information", object.parent.generateInformationEvent(object.function, "information", "Settings file was written successfully"));
@@ -134,7 +143,7 @@ module.exports = function() {
     this.readSettings = function(callback) {
         var object = this;
         try {
-            var data = fs.readFileSync("./settings/proVideoPlayerSettings.txt");
+            var data = fs.readFileSync(this.filePath + "proVideoPlayerSettings.txt");
             try {
                 object.host = data.toString().split("host=")[1].split("\n")[0];
                 object.port = data.toString().split("port=")[1].split("\n")[0];

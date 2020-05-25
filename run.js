@@ -1,6 +1,7 @@
-const churchClocks = require("church-clocks");
-const fs = require("fs")
-
+const churchClocks = require("./app.js");
+const fs = require("fs");
+const os = require('os');
+const filePath = os.homedir() + "/.church-cocks/";
 var webSocketEnabled = false;
 var webSocketPassword = "";
 var webSocketPort = 0;
@@ -8,19 +9,29 @@ var webSocketPort = 0;
 var webServerEnabled = false;
 var webServerPort = false;
 
+module.exports = {
+    generateSettings: function() {
+        var object = this;
+        callback = function(values, callback) {
+            object.writeDefaults(values[0], values[1], values[2], values[3], values[4]);
+        }
+        return {"values": ["Web Socket Enabled", "Web Socket Password", "Web Socket Port", "Web Server Enabled", "Web Server Port"], "callback": callback};
+    }
+}
+
 //Write the default configuration file
-function writeDefaults() {
+function writeDefaults(webSocketEnabled = true, webSocketPassword = "", webSocketPort=9955, webServerEnabled=true, webServerPort=80) {
     var settings = "Church Clocks Configuration File\n\n";
     settings += "* Web Socket Settings *\n";
-    settings += "webSocketEnabled=true\n";
-    settings += "webSocketPassword=\n";
-    settings += "webSocketPort=9955\n";
+    settings += "webSocketEnabled=" + webServerEnabled + "\n";
+    settings += "webSocketPassword=" + webSocketPassword + "\n";
+    settings += "webSocketPort=9955" + webServerPort + "\n";
 
     settings += "* Web Server Settings *\n";
-    settings += "webServerEnabled=true\n";
-    settings += "webServerPort=80\n";
+    settings += "webServerEnabled=" + webServerEnabled + "\n";
+    settings += "webServerPort=" + webServerPort + "\n";
 
-    fs.writeFileSync("applicationSettings.txt", settings, "utf-8", function (err) {
+    fs.writeFileSync(filePath + "applicationSettings.txt", settings, "utf-8", function (err) {
         if(err){console.log("Failed to write default settings file");}
         else {
             console.log("Wrote default settings file");
@@ -30,8 +41,13 @@ function writeDefaults() {
 
 //Read the settings file
 function readSettings(callback) {
+    //Check the directory exists
+    if (!fs.existsSync(filePath)){
+        fs.mkdirSync(filePath);
+    }
+
     try {
-        var data = fs.readFileSync("applicationSettings.txt");
+        var data = fs.readFileSync(filePath + "applicationSettings.txt");
         try {
             webSocketEnabled = data.toString().split("webSocketEnabled=")[1].split("\n")[0] == "true";
             webSocketPassword = data.toString().split("webSocketPassword=")[1].split("\n")[0];
@@ -57,7 +73,7 @@ function readSettings(callback) {
 }
 
 readSettings(function(success) {
-    var clocks = new churchClocks(webSocketEnabled, webSocketPassword, webSocketPort, webServerEnabled, webServerPort);
+    var clocks = new churchClocks(webSocketEnabled, webSocketPassword, webSocketPort, webServerEnabled, webServerPort, filePath);
     clocks.on("connectionStatus", function(message) {
         console.log("Connection Update [" + message.function + "]: " + message.state);
     });

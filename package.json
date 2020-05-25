@@ -7,6 +7,10 @@
     "type": "git",
     "url": "git+ssh://git@github.com/kardinia-church/church-clocks.git"
   },
+  "scripts": {
+    "start": "node run.js",
+    "install": "node install.js"
+  },
   "author": "Kardinia Church",
   "license": "Apache-2.0",
   "bugs": {
@@ -16,6 +20,7 @@
   "dependencies": {
     "puppeteer": "~3.1.0",
     "request": "~2.88.2",
-    "websocket": "~1.0.31"
+    "websocket": "~1.0.31",
+    "prompt-async": "~0.9.9"
   }
 }

@@ -5,6 +5,7 @@
 This module supports running a required script in your own code or can be run directly.
 * First install nodejs and npm on your machine
 * Type ```npm install -g church-clocks --unsafe_perm=true``` to install the module
+When installing the installer should ask if you want to set the settings for each module
 
 # Using as a standalone webserver
 This module includes a standalone script which exposes a websocket and/or a webserver for accesing the clocks
@@ -83,6 +84,8 @@ This will display the next item name
 
 # Using as an included module
 * Include the module using ```const churchClocks = require("church-clocks");```.
+* Then create the object using ```new churchClocks(webSocketEnabled, webSocketPassword, webSocketPort, webServerEnabled, webServerPort, filePath)```
+Where ```webSocketEnabled will enable/disable the websocket```, ```websocketPassword``` will set the password that is required to pass in the WebSocket password to perform commands, ```webSocketPort``` will change the port used to access the websocket, ```webServerEnabled``` will enable/disable the inbuilt webserver, ```filePath``` is where the settings files are stored default is ```%USERPROFILE%/.church-clocks/``` for windows and ```~/.church-clocks/``` for linux.
 
 ## Events
 Events can be accessed by using ```object.on(<eventName>, function(){})```

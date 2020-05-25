@@ -1,3 +1,5 @@
+const fs = require("fs")
+
 module.exports = {
     list: {
         elvanto: require("./elvanto.js"),
@@ -5,10 +7,17 @@ module.exports = {
         proVideoPlayer: require("./proVideoPlayer.js")
     },
     
-    getFunctions: function() {
+    getFunctions: function(filePath) {
+        //Check the directory exists
+        if (!fs.existsSync(filePath)){
+            fs.mkdirSync(filePath);
+        }
+
         var temp = [];
         for(var i in this.list) {
-            temp.push(new this.list[i]);
+            var objTemp = new this.list[i];
+            objTemp.setFilePath(filePath);
+            temp.push(objTemp);
         }
         return temp;
     }

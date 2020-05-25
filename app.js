@@ -14,12 +14,14 @@ app.js: Main entry point
 const {EventEmitter} = require("events");
 const WebSocket = require('ws');
 const http = require('http');
-const fs = require("fs")
+const fs = require("fs");
 const url = require('url'); 
+const os = require('os');
 module.exports = class ChurchClocks extends EventEmitter{
-    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955, enableWebServer = false, webServerPort = 80) {
+    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955, enableWebServer = false, webServerPort = 80, filePath=os.homedir() + "/.church-clocks/") {
         super();
         var object = this;
+        this.filePath = filePath;
 
         this.enableWebSocket = enableWebSocket;
         this.enableWebServer = enableWebServer;
@@ -136,7 +138,7 @@ module.exports = class ChurchClocks extends EventEmitter{
             }).listen(webServerPort);
         }
 
-        this.functions = require("./functions/functions.js").getFunctions();
+        this.functions = require("./functions/functions.js").getFunctions(this.filePath + "functionSettings/");
 
         //Setup functions
         for(var i in this.functions) {
