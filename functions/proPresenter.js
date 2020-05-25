@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const fs = require("fs");
+const os = require('os');
 module.exports = function() {
     this.function = "proPresenter";
     this.host = "0.0.0.0";

@@ -1,4 +1,5 @@
 const fs = require("fs");
+const os = require('os');
 const puppeteer = require('puppeteer');
 module.exports = function() {
     this.function = "elvanto";
@@ -172,6 +173,7 @@ module.exports = function() {
       },
 
     this.readSettings = function(callback) {
+        console.log(os.homedir() + "/.church-clocks/");
         var object = this;
         try {
             var data = fs.readFileSync("./settings/elvantoSettings.txt");

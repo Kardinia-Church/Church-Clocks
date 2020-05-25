@@ -2,6 +2,7 @@
  A nodejs script which is designed to provide a websocket connection to gain information from ProPresenter, ProVideoPlayer, and Elvanto
 
 # Installation
+This module supports running a required script in your own code or can be run directly.
 * First install nodejs and npm on your machine
 * Type ```npm install -g church-clocks --unsafe_perm=true``` to install the module
 

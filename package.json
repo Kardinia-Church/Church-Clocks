@@ -1,11 +1,8 @@
 {
   "name": "church-clocks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A nodejs module which is designed to provide a websocket connection to gain information from ProPresenter, ProVideoPlayer, and Elvanto",
   "main": "app.js",
-  "scripts": {
-    "start": "node node_modules/church-clocks/run.js"
-  },
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/kardinia-church/church-clocks.git"
@@ -17,8 +14,8 @@
   },
   "homepage": "https://github.com/kardinia-church/church-clocks#readme",
   "dependencies": {
-    "websocket": "~1.0.31",
     "puppeteer": "~3.1.0",
-    "request": "~2.88.2"
+    "request": "~2.88.2",
+    "websocket": "~1.0.31"
   }
 }

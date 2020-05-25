@@ -1,5 +1,6 @@
 const request = require("request");
 const fs = require("fs");
+const os = require('os');
 module.exports = function() {
     this.function = "proVideoPlayer";
     this.parent = undefined;
