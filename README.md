@@ -77,6 +77,7 @@ By default the configured port is 80
 ### Supported Parameters
 * ```type``` The type of clock to be displayed
 * ```backgroundcolor``` The background color to be set if required (Note use * instead of # so #0C056D would be *0C056D)
+* ```color``` The text color to be set if required (Note use * instead of # so #0C056D would be *0C056D)
 * ```scale``` The scale of the page. Setting the scale parameter sets the font-size of all text
 * ```font``` The font to display
 
@@ -98,7 +99,7 @@ This will display the video countdown clock for ProVideoPlayer. `pvp-transportid
 *pp_video_clock
 This will display a video countdown clock for ProPresenter.
 * pvpandpp_video_clock
-This will display a clock depending on ProPresenter or ProVideoPlayers clock. If the main clock is not active the other clock if active will display the value. Setting parameter ```main-clock=pvp/pp``` will set what clock takes importance with the pvp clock being default. ```pvp-transportid``` must be set to the id of the transport you wish to get the time from
+This will display a clock depending on ProPresenter or ProVideoPlayers clock. If the main clock is not active the other clock if active will display the value. Setting parameter ```main-clock=pvp/pp``` will set what clock takes importance with the pvp clock being default. ```pvp_transportid``` must be set to the id of the transport you wish to get the time from
 *pp_lyric_next
 This will display the next lyric in ProPresenter
 *pp_lyric_current

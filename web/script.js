@@ -186,7 +186,7 @@ window.onload = function () {
                                 if(msg.value.function == "proVideoPlayer" && msg.value.type == "informationChange") {
                                     if(msg.value.value !== undefined) {
                                         if(msg.value.value.transportStates !== {}) {
-                                            var transportId = params.get("pvp-transportid");
+                                            var transportId = params.get("pvp_transportid");
                                             if(transportId === null){console.log("ERROR: You need a transport id!");}
                                             if(msg.value.value.transportStates.data[transportId] !== undefined) {
                                                 var isPlaying = msg.value.value.transportStates.data[transportId].transportState.isPlaying;
@@ -445,7 +445,7 @@ window.onload = function () {
                                         document.getElementById("singleLineTextValue").innerHTML = "<h1>" + lyric + "</h1>";
                                     }
                                     catch(e){
-                                        document.getElementById("singleLineTextValue").innerHTML = "-";
+                                        document.getElementById("singleLineTextValue").innerHTML = "<h1>-</h1>";
                                     }
                                 }
                             }
@@ -479,7 +479,14 @@ window.onload = function () {
         //Adjust page attributes 
         if(params.get("backgroundcolor") !== null) {
             document.getElementsByTagName("html")[0].style.backgroundColor = params.get("backgroundcolor").replace('*', '#');
-        };
+        }
+
+        //Set text color
+        if(params.get("color") !== null) {
+            for(var i = 0; i < document.getElementsByTagName("h1").length; i++) {
+                document.getElementsByTagName("h1")[i].style.color = params.get("color").replace('*', '#');
+            }
+        }
 
         //Scale text
         if(params.get("scale") !== null) {
