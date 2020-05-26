@@ -83,6 +83,8 @@ By default the configured port is 80
 For example ```http://localhost/?type=elvanto_countdown_clock&backgroundcolor=*4C146D&scale=20em&font=arial```
 
 #### Supported types
+* current_time
+This will display the current system time
 * elvanto_countdown_clock
 This will display the elvanto coutdown clock (Current time left for current item)
 * elvanto_items
@@ -91,6 +93,17 @@ This will display the current item followed by the next item
 This will display the current item name
 * elvanto_nextitem
 This will display the next item name
+*pvp_video_clock
+This will display the video countdown clock for ProVideoPlayer. `pvp-transportid``` must be set to the id of the transport you wish to get the time from
+*pp_video_clock
+This will display a video countdown clock for ProPresenter.
+* pvpandpp_video_clock
+This will display a clock depending on ProPresenter or ProVideoPlayers clock. If the main clock is not active the other clock if active will display the value. Setting parameter ```main-clock=pvp/pp``` will set what clock takes importance with the pvp clock being default. ```pvp-transportid``` must be set to the id of the transport you wish to get the time from
+*pp_lyric_next
+This will display the next lyric in ProPresenter
+*pp_lyric_current
+This will display the current lyric in ProPresenter
+
 
 # Using as an included module
 * Include the module using ```const churchClocks = require("church-clocks");```.

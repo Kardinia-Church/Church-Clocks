@@ -4,7 +4,8 @@ module.exports = {
     list: {
         elvanto: require("./elvanto.js"),
         proPresenter: require("./proPresenter.js"),
-        proVideoPlayer: require("./proVideoPlayer.js")
+        proVideoPlayer: require("./proVideoPlayer.js"),
+        "systemtime": require("./systemtime.js")
     },
     
     getFunctions: function(filePath) {

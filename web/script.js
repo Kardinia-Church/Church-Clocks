@@ -7,6 +7,11 @@ window.onload = function () {
 
     //Set the element based off the function
     switch(params.get("type")) {
+        case "current_time": {
+            document.getElementById("unsupported").style.display = "none";
+            document.getElementById("singleLineClock").style.display = "block";
+            break;
+        }
         case "elvanto_countdown_clock": {
             document.getElementById("unsupported").style.display = "none";
             document.getElementById("singleLineClock").style.display = "block";
@@ -21,6 +26,23 @@ window.onload = function () {
         case "elvanto_items": {
             document.getElementById("unsupported").style.display = "none";
             document.getElementById("multiLineText").style.display = "block";
+            break;
+        }
+        case "pvp_video_clock":
+        case "pp_video_clock": {
+            document.getElementById("unsupported").style.display = "none";
+            document.getElementById("singleLineClock").style.display = "block";
+            break;
+        }
+        case "pvpandpp_video_clock": {
+            document.getElementById("unsupported").style.display = "none";
+            document.getElementById("singleLineClock").style.display = "block";
+            break;
+        }
+        case "pp_lyric_next":
+        case "pp_lyric_current": {
+            document.getElementById("unsupported").style.display = "none";
+            document.getElementById("singleLineText").style.display = "block";
             break;
         }
     }
@@ -94,6 +116,12 @@ window.onload = function () {
                 }
                 case "functionEvent": {
                     switch(params.get("type")) {
+                        case "current_time": {
+                            if(msg.value.function == "systemtime" && msg.value.type == "informationChange") {
+                                document.getElementById("singleLineClockValue").innerHTML = msg.value.value;
+                            }
+                            break;
+                        }
                         case "elvanto_countdown_clock": {
                             if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
                                 if(isEmpty(msg.value.value) == false && msg.value.value.timeLeftSec !== undefined && msg.value.value.timeLeftSec !== false) {
@@ -149,6 +177,273 @@ window.onload = function () {
                                 }
                                 else {
                                     document.getElementById("multiLineTextValue").innerHTML = "<h1>-</h1>";
+                                }
+                            }
+                            break;
+                        }
+                        case "pvp_video_clock": {
+                            if(msg.event == "functionEvent") {
+                                if(msg.value.function == "proVideoPlayer" && msg.value.type == "informationChange") {
+                                    if(msg.value.value !== undefined) {
+                                        if(msg.value.value.transportStates !== {}) {
+                                            var transportId = params.get("pvp-transportid");
+                                            if(transportId === null){console.log("ERROR: You need a transport id!");}
+                                            if(msg.value.value.transportStates.data[transportId] !== undefined) {
+                                                var isPlaying = msg.value.value.transportStates.data[transportId].transportState.isPlaying;
+                                                var timeRemaining = msg.value.value.transportStates.data[transportId].transportState.timeRemaining;
+
+                                                if(sessionStorage.getItem("pvpValues") !== null && timeRemaining === JSON.parse(sessionStorage.getItem("pvpValues")).timeRemaining){isPlaying = false;}
+                                                sessionStorage.setItem("pvpValues", JSON.stringify({
+                                                    "isPlaying": isPlaying,
+                                                    "timeRemaining": timeRemaining
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            var currentTimeSec = -1;
+                            var isPaused = false;
+                            try {var pvp = JSON.parse(sessionStorage.getItem("pvpValues"));} catch(e) {var pvp = {"isPlaying": false, "timeRemaining": 0}}
+
+                            if(pvp.isPlaying == true) {
+                                currentTimeSec = pvp.timeRemaining;
+                            }
+                            else {
+                                isPaused = true;
+                                if(pvp.timeRemaining == 0){currentTimeSec = -1;}
+                                else {currentTimeSec = pvp.timeRemaining;}
+                            }
+
+                            if(currentTimeSec !== -1) {
+                                //Set the colour
+                                if(isPaused == true) {
+                                    document.getElementById("singleLineClockValue").className = "timerPaused";
+                                }
+                                else {
+                                    if(currentTimeSec > 15) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning";
+                                    }
+                                    else if(currentTimeSec > 10) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-almost";
+                                    }
+                                    else if(currentTimeSec > 0) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-over";
+                                    }
+                                }
+
+                                document.getElementById("singleLineClockValue").innerHTML = convertTime(currentTimeSec);
+                            }
+                            else {
+                                document.getElementById("singleLineClockValue").className = "timerPaused";
+                                document.getElementById("singleLineClockValue").innerHTML = "--:--:--";
+                            } 
+                            break;
+                        }
+                        case "pp_video_clock": {
+                            if(msg.value.function == "proPresenter" && msg.value.type == "informationChange") {
+                                if(msg.value.value !== undefined) {
+                                    if(msg.value.value.vid !== undefined) {
+                                        var timeRemaining = msg.value.value.vid.txt;
+                                        var timeRemainingSec = (parseInt(timeRemaining.split(":")[0]) * 3600) + (parseInt(timeRemaining.split(":")[1]) * 60) + parseInt(timeRemaining.split(":")[2]);
+                                        var isPlaying = true;
+                                        var checkPlay = JSON.parse(sessionStorage.getItem("ppValues")).checkPlay;
+
+                                        if(isNaN(timeRemainingSec)){isPlaying = false;}
+                                        if(sessionStorage.getItem("ppValues") !== null && timeRemainingSec === JSON.parse(sessionStorage.getItem("ppValues")).timeRemaining) {
+                                            if(JSON.parse(sessionStorage.getItem("ppValues")).checkPlay === undefined) {
+                                                checkPlay = true;
+                                            }
+                                            else {
+                                                isPlaying = false;
+                                            }
+                                        }
+                                        else {checkPlay = undefined;}
+
+                                        if(timeRemaining === "--:--:--"){timeRemainingSec = -1;}
+                                        sessionStorage.setItem("ppValues", JSON.stringify({
+                                            "isPlaying": isPlaying,
+                                            "timeRemaining": timeRemainingSec,
+                                            "checkPlay": checkPlay
+                                        }));
+                                    }
+                                }
+                            }
+
+                            var currentTimeSec = -1;
+                            var isPaused = false;
+                            try {var pp = JSON.parse(sessionStorage.getItem("ppValues"));} catch(e) {var pp = {"isPlaying": false, "timeRemaining": 0}}
+                            
+                            if(pp.isPlaying == true) {
+                                currentTimeSec = pp.timeRemaining;
+                            }
+                            else {
+                                isPaused = true;
+                                currentTimeSec = pp.timeRemaining;
+                            }
+
+                            if(currentTimeSec !== -1) {
+                                //Set the colour
+                                if(isPaused == true) {
+                                    document.getElementById("singleLineClockValue").className = "timerPaused";
+                                }
+                                else {
+                                    if(currentTimeSec > 15) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning";
+                                    }
+                                    else if(currentTimeSec > 10) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-almost";
+                                    }
+                                    else if(currentTimeSec > 0) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-over";
+                                    }
+                                }
+
+                                document.getElementById("singleLineClockValue").innerHTML = convertTime(currentTimeSec);
+                            }
+                            else {
+                                document.getElementById("singleLineClockValue").className = "timerPaused";
+                                document.getElementById("singleLineClockValue").innerHTML = "--:--:--";
+                            } 
+                            break;
+                        }
+                        case "pvpandpp_video_clock": {
+                            if(msg.event == "functionEvent") {
+                                if(msg.value.function == "proVideoPlayer" && msg.value.type == "informationChange") {
+                                    if(msg.value.value !== undefined) {
+                                        if(msg.value.value.transportStates !== {}) {
+                                            var transportId = params.get("pvp-transportid");
+                                            if(transportId === null){console.log("ERROR: You need a transport id!");}
+                                            if(msg.value.value.transportStates.data[transportId] !== undefined) {
+                                                var isPlaying = msg.value.value.transportStates.data[transportId].transportState.isPlaying;
+                                                var timeRemaining = msg.value.value.transportStates.data[transportId].transportState.timeRemaining;
+
+                                                if(sessionStorage.getItem("pvpValues") !== null && timeRemaining === JSON.parse(sessionStorage.getItem("pvpValues")).timeRemaining){isPlaying = false;}
+                                                sessionStorage.setItem("pvpValues", JSON.stringify({
+                                                    "isPlaying": isPlaying,
+                                                    "timeRemaining": timeRemaining
+                                                }));
+                                            }
+                                        }
+                                    }
+                                }
+                                if(msg.value.function == "proPresenter" && msg.value.type == "informationChange") {
+                                    if(msg.value.value !== undefined) {
+                                        if(msg.value.value.vid !== undefined) {
+                                            var timeRemaining = msg.value.value.vid.txt;
+                                            var timeRemainingSec = (parseInt(timeRemaining.split(":")[0]) * 3600) + (parseInt(timeRemaining.split(":")[1]) * 60) + parseInt(timeRemaining.split(":")[2]);
+                                            var isPlaying = true;
+                                            var checkPlay = JSON.parse(sessionStorage.getItem("ppValues")).checkPlay;
+
+                                            if(isNaN(timeRemainingSec)){isPlaying = false;}
+                                            if(sessionStorage.getItem("ppValues") !== null && timeRemainingSec === JSON.parse(sessionStorage.getItem("ppValues")).timeRemaining) {
+                                                if(JSON.parse(sessionStorage.getItem("ppValues")).checkPlay === undefined) {
+                                                    checkPlay = true;
+                                                }
+                                                else {
+                                                    isPlaying = false;
+                                                }
+                                            }
+                                            else {checkPlay = undefined;}
+
+                                            if(timeRemaining === "--:--:--"){timeRemainingSec = -1;}
+                                            sessionStorage.setItem("ppValues", JSON.stringify({
+                                                "isPlaying": isPlaying,
+                                                "timeRemaining": timeRemainingSec,
+                                                "checkPlay": checkPlay
+                                            }));
+                                        }
+                                    }
+                                }
+                            }
+
+                            var currentTimeSec = -1;
+                            var mainClock = params.get("main-clock");
+                            var isPaused = false;
+                            if(mainClock === null || mainClock === "pvp") {
+                                //PVP Main
+                                try {var pvp = JSON.parse(sessionStorage.getItem("pvpValues"));} catch(e) {var pvp = {"isPlaying": false, "timeRemaining": 0}}
+                                try {var pp = JSON.parse(sessionStorage.getItem("ppValues"));} catch(e) {var pp = {"isPlaying": false, "timeRemaining": 0}}
+
+                                if(pvp.isPlaying == true) {
+                                    currentTimeSec = pvp.timeRemaining;
+                                }
+                                else if(pp.isPlaying == true) {
+                                    currentTimeSec = pp.timeRemaining;
+                                }
+                                else {
+                                    isPaused = true;
+                                    if(pvp.timeRemaining == 0){currentTimeSec = -1;}
+                                    else {currentTimeSec = pvp.timeRemaining;}
+                                }
+                            }
+                            else {
+                                //PP Main
+                                try {var pvp = JSON.parse(sessionStorage.getItem("pvpValues"));} catch(e) {var pvp = {"isPlaying": false, "timeRemaining": 0}}
+                                try {var pp = JSON.parse(sessionStorage.getItem("ppValues"));} catch(e) {var pp = {"isPlaying": false, "timeRemaining": 0}}
+
+                                if(pp.isPlaying == true) {
+                                    currentTimeSec = pp.timeRemaining;
+                                }
+                                else if(pvp.isPlaying == true) {
+                                    currentTimeSec = pvp.timeRemaining;
+                                }
+                                else {
+                                    isPaused = true;
+                                    currentTimeSec = pp.timeRemaining;
+                                }
+                            }
+
+                            if(currentTimeSec !== -1) {
+                                //Set the colour
+                                if(isPaused == true) {
+                                    document.getElementById("singleLineClockValue").className = "timerPaused";
+                                }
+                                else {
+                                    if(currentTimeSec > 15) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning";
+                                    }
+                                    else if(currentTimeSec > 10) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-almost";
+                                    }
+                                    else if(currentTimeSec > 0) {
+                                        document.getElementById("singleLineClockValue").className = "timerRunning-over";
+                                    }
+                                }
+
+                                document.getElementById("singleLineClockValue").innerHTML = convertTime(currentTimeSec);
+                            }
+                            else {
+                                document.getElementById("singleLineClockValue").className = "timerPaused";
+                                document.getElementById("singleLineClockValue").innerHTML = "--:--:--";
+                            } 
+                            break;
+                        }
+                        case "pp_lyric_next": {
+                            if(msg.event == "functionEvent") {
+                                if(msg.value.function == "proPresenter" && msg.value.type == "informationChange") {
+                                    try { 
+                                        var lyric = msg.value.value.ns.txt;
+                                        document.getElementById("singleLineTextValue").innerHTML = "<h1>" + lyric + "</h1>";
+                                    }
+                                    catch(e){
+                                        document.getElementById("singleLineTextValue").innerHTML = "-";
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        case "pp_lyric_current": {
+                            if(msg.event == "functionEvent") {
+                                if(msg.value.function == "proPresenter" && msg.value.type == "informationChange") {
+                                    try { 
+                                        var lyric = msg.value.value.cs.txt;
+                                        document.getElementById("singleLineTextValue").innerHTML = "<h1>" + lyric + "</h1>";
+                                    }
+                                    catch(e){
+                                        document.getElementById("singleLineTextValue").innerHTML = "-";
+                                    }
                                 }
                             }
                             break;
