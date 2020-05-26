@@ -11,7 +11,17 @@ When installing the installer should ask if you want to set the settings for eac
 This module includes a standalone script which exposes a websocket and/or a webserver for accesing the clocks
 
 ## Running
-Todo :)
+In order to run as a standalone webserver you must install the module above and run the installer script to configure the configuration files which will be at ```<userdirectory>/.church-clocks```. This script will be ran when installing church-clocks or can be ran again by running ```generateSettings.js```
+* Find the location where npm installed the module typically in ```/usr/local/lib/node``` or ```/usr/local/lib/node_modules``` for linux machines and ```%USERPROFILE%\AppData\Roaming\npm\node_modules``` for windows
+* Navigate to the .church-clocks directory ```cd /usr/local/lib/node_modules/church-clocks```
+* Run ```node run.js``` to run it or ```node generateSettings.js``` to generate the settings file
+
+### Running on boot (Linux)
+In order to run on boot you need to find the command that is required to run the module above. This will typically be in ```/usr/local/lib/node_modules/church-clocks```
+* First install pm2 ```npm install pm2 -g```
+* Type ```sudo pm2 start <YOUR_NPM_LOCATION>/church-clocks/pm2Service.json```
+* Type ```sudo pm2 save``` to save the changes
+* Check the logs with ```sudo pm2 logs```
 
 ## WebSocket
 ## Connecting
