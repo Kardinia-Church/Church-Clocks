@@ -203,6 +203,10 @@ window.onload = function () {
                                 }
                             }
 
+                            if(sessionStorage.getItem("pvpValues") === null) {
+                                sessionStorage.setItem("pvpValues", JSON.stringify({"isPlaying": false, "timeRemaining": 0}));
+                            }
+
                             var currentTimeSec = -1;
                             var isPaused = false;
                             try {var pvp = JSON.parse(sessionStorage.getItem("pvpValues"));} catch(e) {var pvp = {"isPlaying": false, "timeRemaining": 0}}
@@ -271,6 +275,10 @@ window.onload = function () {
                                 }
                             }
 
+                            if(sessionStorage.getItem("ppValues") === null) {
+                                sessionStorage.setItem("ppValues", JSON.stringify({"isPlaying": false, "timeRemaining": 0, "checkPlay": undefined}));
+                            }
+
                             var currentTimeSec = -1;
                             var isPaused = false;
                             try {var pp = JSON.parse(sessionStorage.getItem("ppValues"));} catch(e) {var pp = {"isPlaying": false, "timeRemaining": 0}}
@@ -334,7 +342,7 @@ window.onload = function () {
                                             var timeRemaining = msg.value.value.vid.txt;
                                             var timeRemainingSec = (parseInt(timeRemaining.split(":")[0]) * 3600) + (parseInt(timeRemaining.split(":")[1]) * 60) + parseInt(timeRemaining.split(":")[2]);
                                             var isPlaying = true;
-                                            var checkPlay = JSON.parse(sessionStorage.getItem("ppValues")).checkPlay;
+                                            try {var checkPlay = JSON.parse(sessionStorage.getItem("ppValues")).checkPlay;}catch(e){var checkPlay = undefined;}
 
                                             if(isNaN(timeRemainingSec)){isPlaying = false;}
                                             if(sessionStorage.getItem("ppValues") !== null && timeRemainingSec === JSON.parse(sessionStorage.getItem("ppValues")).timeRemaining) {
@@ -360,6 +368,15 @@ window.onload = function () {
 
                             var currentTimeSec = -1;
                             var mainClock = params.get("main-clock");
+
+                            //Check if information is set, if not default
+                            if(sessionStorage.getItem("pvpValues") === null) {
+                                sessionStorage.setItem("pvpValues", JSON.stringify({"isPlaying": false, "timeRemaining": 0}));
+                            }
+                            if(sessionStorage.getItem("ppValues") === null) {
+                                sessionStorage.setItem("ppValues", JSON.stringify({"isPlaying": false, "timeRemaining": 0, "checkPlay": undefined}));
+                            }
+
                             var isPaused = false;
                             if(mainClock === null || mainClock === "pvp") {
                                 //PVP Main

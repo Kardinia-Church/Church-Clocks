@@ -1,6 +1,6 @@
 {
   "name": "church-clocks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A nodejs module which is designed to provide a websocket connection to gain information from ProPresenter, ProVideoPlayer, and Elvanto",
   "main": "app.js",
   "repository": {
