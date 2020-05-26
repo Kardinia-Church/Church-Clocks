@@ -1,0 +1,9 @@
+{
+    "apps": [
+        {
+            "name": "church-clocks",
+            "script": "npm",
+            "args": "start"
+        }
+    ]
+}
