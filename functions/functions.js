@@ -5,7 +5,7 @@ module.exports = {
         elvanto: require("./elvanto.js"),
         proPresenter: require("./proPresenter.js"),
         proVideoPlayer: require("./proVideoPlayer.js"),
-        "systemtime": require("./systemtime.js")
+        systemtime: require("./systemtime.js")
     },
     
     getFunctions: function(filePath) {

@@ -30,7 +30,7 @@ module.exports = function() {
 
     //Convert date to AM PM
     this.formatAMPM = function(date) {
-        var hour = date.getHours() & 12;
+        var hour = date.getHours() % 12;
         var minutes = date.getMinutes() < 10 ? "0" + date.getMinutes() : date.getMinutes();
         var seconds = date.getSeconds() < 10 ? "0" + date.getSeconds() : date.getSeconds();
         var amPM = date.getHours() >= 12 ? "PM" : "AM";
