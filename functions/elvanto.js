@@ -16,8 +16,6 @@ module.exports = function() {
 
     //Main web grabber.
     async function main(object) {
-        object.run = false;
-
         //Open browser
         object.parent.emit("information", object.parent.generateInformationEvent(object.function, "grabber", "Opened grabber"));
 
@@ -44,7 +42,15 @@ module.exports = function() {
 
             //Check if we are logged in
             if(await page.evaluate(() => Elvanto.url.site.includes("login") === false)) {
+                object.parent.emit("information", object.parent.generateInformationEvent(object.function, "grabber", "Logged in successfully!"));
                 while(object.run == true) {
+                    if(await page.evaluate(() => window.Live.currentPlanItem) === "end"){
+                        object.run = false;
+                        object.storedInformation = {};
+                        object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
+                        break;
+                    }
+                    
                     object.storedInformation.timeLeftSec = await page.evaluate(() => window.Live.countdownSeconds);
                     object.storedInformation.servicePlanItems = await page.evaluate(() => window.Live.servicePlanItems);
                     object.storedInformation.currentPlanItem = await page.evaluate(() => window.Live.currentPlanItem);
@@ -72,7 +78,7 @@ module.exports = function() {
                     }
                     
                     object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
-                    await delay(500);
+                    await delay(200);
                 }
 
                 //When exiting send undefined
@@ -122,6 +128,8 @@ module.exports = function() {
         if(message.function == "elvanto") {
             switch(message.command) {
                 case "setService": {
+                    this.run = false;
+                    this.storedInformation = {};
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Setting service"));
                     this.serviceId = message.value;
                     this.run = true;
