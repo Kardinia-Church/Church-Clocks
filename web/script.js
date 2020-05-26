@@ -321,7 +321,7 @@ window.onload = function () {
                                 if(msg.value.function == "proVideoPlayer" && msg.value.type == "informationChange") {
                                     if(msg.value.value !== undefined) {
                                         if(msg.value.value.transportStates !== {}) {
-                                            var transportId = params.get("pvp-transportid");
+                                            var transportId = params.get("pvp_transportid");
                                             if(transportId === null){console.log("ERROR: You need a transport id!");}
                                             if(msg.value.value.transportStates.data[transportId] !== undefined) {
                                                 var isPlaying = msg.value.value.transportStates.data[transportId].transportState.isPlaying;
@@ -367,7 +367,7 @@ window.onload = function () {
                             }
 
                             var currentTimeSec = -1;
-                            var mainClock = params.get("main-clock");
+                            var mainClock = params.get("main_clock");
 
                             //Check if information is set, if not default
                             if(sessionStorage.getItem("pvpValues") === null) {
