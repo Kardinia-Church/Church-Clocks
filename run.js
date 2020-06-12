@@ -1,7 +1,7 @@
 const churchClocks = require("./app.js");
 const fs = require("fs");
 const os = require('os');
-const filePath = os.homedir() + "/.church-cocks/";
+const filePath = os.homedir() + "/.church-clocks/";
 var webSocketEnabled = false;
 var webSocketPassword = "";
 var webSocketPort = 0;

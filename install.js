@@ -3,7 +3,7 @@ const os = require('os');
 const fs = require("fs");
 const churchClocks = require("./app.js");
 prompt.start();
-var dir = os.homedir() + "/.church-cocks/"
+var dir = os.homedir() + "/.church-clocks/"
 
 async function setup() {
     console.log("Church Clocks Setup");
