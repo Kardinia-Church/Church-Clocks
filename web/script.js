@@ -45,6 +45,10 @@ window.onload = function () {
             document.getElementById("singleLineText").style.display = "block";
             break;
         }
+        case "debug": {
+            document.getElementById("unsupported").style.display = "none";
+            document.getElementById("singleLineText").style.display = "block";
+        }
     }
 
     var connectionChanged = function(state) {
@@ -115,6 +119,13 @@ window.onload = function () {
                     break;
                 }
                 case "functionEvent": {
+                    //If debug is enabled
+                    if(params.get("type") == "debug") {
+                        document.getElementById("singleLineTextValue").innerHTML = "debug active";
+                        console.log("Data: (Event: " + msg.event + ", Func: " + msg.value.function + ", Type: " + msg.value.type + ")");
+                        console.log(msg.value.value)
+                    }
+
                     switch(params.get("type")) {
                         case "current_time": {
                             if(msg.value.function == "systemtime" && msg.value.type == "informationChange") {

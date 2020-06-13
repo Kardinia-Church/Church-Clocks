@@ -104,6 +104,8 @@ This will display a clock depending on ProPresenter or ProVideoPlayers clock. If
 This will display the next lyric in ProPresenter
 *pp_lyric_current
 This will display the current lyric in ProPresenter
+*debug
+Will show all the incoming data. Useful if you're developing your own solution
 
 
 # Using as an included module
