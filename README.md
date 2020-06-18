@@ -19,9 +19,10 @@ In order to run as a standalone webserver you must install the module above and 
 ### Running on boot (Linux)
 In order to run on boot you need to find the command that is required to run the module above. This will typically be in ```/usr/local/lib/node_modules/church-clocks```
 * First install pm2 ```npm install pm2 -g```
-* Type ```sudo pm2 start <YOUR_NPM_LOCATION>/church-clocks/pm2Service.json```
-* Type ```sudo pm2 save``` to save the changes
-* Check the logs with ```sudo pm2 logs```
+* Type ```pm2 start /usr/local/lib/node_modules/church-clocks/pm2Service.json```
+* Type ```pm2 save``` to save the changes
+* Type ```pm2 startup``` to make it launch on boot
+* Check the logs with ```pm2 logs church-clocks```
 
 ## WebSocket
 ## Connecting
