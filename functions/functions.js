@@ -3,6 +3,7 @@ const fs = require("fs")
 module.exports = {
     list: {
         elvanto: require("./elvanto.js"),
+        fluro: require("./fluro.js"),
         proPresenter: require("./proPresenter.js"),
         proVideoPlayer: require("./proVideoPlayer.js"),
         systemtime: require("./systemtime.js")
