@@ -12,11 +12,13 @@ window.onload = function () {
             document.getElementById("singleLineClock").style.display = "block";
             break;
         }
-        case "elvanto_countdown_clock": {
+        case "elvanto_countdown_clock":
+        case "fluro_countdown_clock": {
             document.getElementById("unsupported").style.display = "none";
             document.getElementById("singleLineClock").style.display = "block";
             break;
         }
+        // TODO: Add Fluro next and current (Bevan to add on other end to complete)
         case "elvanto_currentitem":
         case "elvanto_nextitem": {
             document.getElementById("unsupported").style.display = "none";
@@ -133,8 +135,10 @@ window.onload = function () {
                             }
                             break;
                         }
-                        case "elvanto_countdown_clock": {
-                            if(msg.value.function == "elvanto" && msg.value.type == "informationChange") {
+                        case "elvanto_countdown_clock":
+                        case "fluro_countdown_clock": {
+                            if(["elvanto","fluro"].includes(msg.value.function) && msg.value.type == "informationChange") {
+                                console.log(msg);
                                 if(isEmpty(msg.value.value) == false && msg.value.value.timeLeftSec !== undefined && msg.value.value.timeLeftSec !== false) {
 
                                     //Set the colour
