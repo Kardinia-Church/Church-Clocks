@@ -87,8 +87,10 @@ For example ```http://localhost/?type=elvanto_countdown_clock&backgroundcolor=*4
 #### Supported types
 * current_time
 This will display the current system time
-* elvanto_countdown_clock
-This will display the elvanto coutdown clock (Current time left for current item)
+* elvanto_countdown_clock 
+This will display the elvanto countdown clock (Current time left for current item)
+* fluro_countdown_clock
+This will display the fluro countdown clock (Current time left for current item)
 * elvanto_items
 This will display the current item followed by the next item
 * elvanto_currentitem
@@ -150,6 +152,15 @@ In general all functions will output information as events which can be seen bel
     "value": "the value" 
 }
 ```
+
+## Fluro settings
+The Fluro module is setup to dynamically grab the next service depending on the settings provided.
+**apiKey:** An API Key from Fluro
+**realm:** The ID of a realm the event(s) are stored in
+**track:** The ID of an event track that the event(s) are stored in
+**date:** Specify a date to get events for (useful for testing) // Should be in `YYYY-MM-DD` format
+**eventID:** Specify a specific event ID (the first plan will be fetched)
+**planID:** Grab a specific plan
 
 ## Controlling functions
 Functions can be sent requests by using the ```sendToFunctions(message)``` function and passing a message as follows:
