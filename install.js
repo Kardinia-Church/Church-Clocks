@@ -39,7 +39,7 @@ async function setup() {
             }
 
             callback(answers, function(success) { 
-                if(success !== true){console.log("An error occured writing that file");}
+                if(success !== true){console.log("An error occurred writing that file");}
             });
         }
 
@@ -54,7 +54,7 @@ async function setup() {
             answers.push(temp[j]);
         }
         callback(answers, function(success) { 
-            if(success !== true){console.log("An error occured writing that file");}
+            if(success !== true){console.log("An error occurred writing that file");}
         });
     }
 

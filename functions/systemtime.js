@@ -25,7 +25,6 @@ module.exports = function() {
                 object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", date));
             }
         }, 200);
-        
     }
 
     //Convert date to AM PM
@@ -39,6 +38,9 @@ module.exports = function() {
 
     //Write the settings file though a prompt (used for the install script)
     this.writeSettingsPrompt = function() {
-        return false;
+        var object = this;
+        callback = function (values, callback) {
+        }
+        return { "values": ["No settings just hit enter :)"], "callback": callback };
     }
 }

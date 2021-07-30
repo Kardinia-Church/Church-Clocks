@@ -10,7 +10,7 @@ module.exports = function () {
     this.storedInformation = {};
     this.connected = false;
     this.updaterInterval = undefined;
-    this.run = false;
+    this.enabled = false;
 
 
     this.queryFluroPlan = async () => {
@@ -226,6 +226,9 @@ module.exports = function () {
         var object = this;
 
         // Initialise Fluro object
+
+        if(!this.enabled){return;}
+
         object.fluro = new Fluro({
             apiURL: API_URL,
             applicationToken: object.apiKey
@@ -260,12 +263,12 @@ module.exports = function () {
     this.writeSettings = function (apiKey, realm, track, date, eventID, planID, callback) {
         var object = this;
         var settings = "Church Clocks Fluro Configuration File\n\n";
-        settings += "apiKey=" + apiKey + "\n";
-        settings += "realm=" + realm + "\n";
-        settings += "track=" + track + "\n";
-        settings += "date=" + date + "\n";
-        settings += "eventID=" + eventID + "\n";
-        settings += "planID=" + planID + "\n";
+        settings += "apiKey=" + (apiKey || "") + "\n";
+        settings += "realm=" + (realm || "") + "\n";
+        settings += "track=" + (track || "") + "\n";
+        settings += "date=" + (date || "") + "\n";
+        settings += "eventID=" + (eventID || "") + "\n";
+        settings += "planID=" + (planID || "") + "\n";
 
         fs.writeFileSync(this.filePath + "fluroSettings.txt", settings, "utf-8", function (err) {
             if (err) { object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if (callback) { callback(false); } }

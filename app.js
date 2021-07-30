@@ -172,7 +172,7 @@ module.exports = class ChurchClocks extends EventEmitter{
         }
     }
 
-    //Send a message to the internal fumctions to process something
+    //Send a message to the internal functions to process something
     sendToFunctions(message) {
         var funcFound = false;
         for(var i in this.functions) {
@@ -191,6 +191,7 @@ module.exports = class ChurchClocks extends EventEmitter{
 
         //Connect functions
         for(var i in this.functions) {
+            this.functions[i].enabled = this.enableWebSocket || this.enableWebServer;
             this.functions[i].connect();
         }
     }
