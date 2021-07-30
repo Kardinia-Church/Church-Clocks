@@ -139,9 +139,12 @@ module.exports = function () {
     this.getData = async (itemID) => {
         var self = this;
 
+
         return new Promise((resolve, reject) => {
 
             const url = `/content/get/${itemID}`
+
+            if (!itemID) reject("No itemID found");
 
             self.fluro.api.get(url, { cache: false })
                 .then(res => resolve(res.data))
