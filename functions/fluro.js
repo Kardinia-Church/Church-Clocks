@@ -143,7 +143,7 @@ module.exports = function () {
 
             const url = `/content/get/${itemID}`
 
-            self.fluro.api.get(url)
+            self.fluro.api.get(url, { cache: false })
                 .then(res => resolve(res.data))
                 .catch(err => {
                     reject("Error fetching plan data from Fluro")
@@ -194,6 +194,7 @@ module.exports = function () {
                     let current = item.data.current || null;
                     object.storedInformation.startedAt = item.data.time;
                     object.storedInformation.currentItem = item.schedules.filter(schedule => schedule._id + "-" + schedule.title.split(" ")[0].toLowerCase() == current)[0];
+                    object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "information", object.storedInformation.currentItem.title));
 
                 })
                 .catch(err => { return });
