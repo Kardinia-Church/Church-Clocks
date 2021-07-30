@@ -19,7 +19,11 @@ module.exports = function () {
         var object = this;
 
         // If planID is set in settings, resolve
-        if (self.planID) resolve(self.planID);
+        if (self.planID) {
+            return new Promise((resolve, reject) => {
+                resolve(self.planID);
+            });
+        };
 
         // Initialise current date default
         let date = new Date();
@@ -167,7 +171,12 @@ module.exports = function () {
         var object = this;
 
         // Get Fluro Plan ID based on current settings
-        object.computedPlanID = await this.queryFluroPlan();
+        object.computedPlanID = await this.queryFluroPlan()
+            .then(res => res)
+            .catch(err => {
+                object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Error querying for plan item"));
+                return false;
+            });
 
         // If no plan found, try again in 60 seconds
         if (!object.computedPlanID) {
@@ -272,7 +281,6 @@ module.exports = function () {
                 object.realm = data.toString().split("realm=")[1].split("\n")[0];
                 object.track = data.toString().split("track=")[1].split("\n")[0];
                 object.date = data.toString().split("date=")[1].split("\n")[0];
-                object.date = data.toString().split("date=")[1].split("\n")[0];
                 object.eventID = data.toString().split("eventID=")[1].split("\n")[0];
                 object.planID = data.toString().split("planID=")[1].split("\n")[0];
 
@@ -287,7 +295,7 @@ module.exports = function () {
             }
             catch (e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>");
+                object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined);
                 object.readSettings(object, callback);
             }
         }
@@ -295,7 +303,7 @@ module.exports = function () {
             switch (e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", function (success) {
+                    object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function (success) {
                         if (success == true) {
                             object.readSettings(object, callback);
                         }
