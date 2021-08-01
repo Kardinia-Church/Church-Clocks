@@ -57,7 +57,7 @@ module.exports = function () {
             filters: [{
                 key: 'status',
                 comparator: 'in',
-                values: ['active', 'archived', 'draft'],
+                values: ['active'],
             }]
         }
 
