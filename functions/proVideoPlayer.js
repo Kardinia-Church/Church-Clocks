@@ -11,6 +11,7 @@ module.exports = function() {
     this.connected = false;
     this.updaterInterval = undefined;
     this.checkFailInterval = undefined;
+    this.enabled = false;
 
     this.protocol = "http";
     this.host = "0.0.0.0";
@@ -89,11 +90,13 @@ module.exports = function() {
     }
 
     //Attempt connection
-    this.connect = function() {
+    this.connect = async function() {
         var object = this;
         this.parent.emit("connectionStatus", this.parent.generateConnectionState(this.function, "connecting"));
         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
-        this.readSettings();
+        await this.readSettings();
+
+        if (!this.enabled) { return; }
 
         clearInterval(this.updaterInterval);
         this.updaterInterval = setInterval(function() {
@@ -126,6 +129,7 @@ module.exports = function() {
         var object = this;
         var settings = "";
         var settings = "Church Clocks ProVideoPlayer Configuration File\n\n";
+        settings += "enabled=false\n";
         settings += "host=" + host + "\n";
         settings += "port=" + port + "\n";
         settings += "apiLocation=" + apiLocation + "\n";

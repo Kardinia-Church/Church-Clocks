@@ -3,6 +3,7 @@ module.exports = function() {
     this.parent = undefined;
     this.dateSender = undefined;
     this.previousDate = undefined;
+    this.enabled = true;
 
     //Not required
     this.setFilePath = function(filePath) {

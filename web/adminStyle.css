@@ -1,0 +1,26 @@
+html {
+    text-align: center;
+}
+
+label {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+input {
+    margin-bottom: 2vh;
+}
+
+button {
+    width: 20vw;
+    height: 5vw;
+    margin-top: 1vw;
+}
+
+#consoleInformation {
+    overflow: scroll;
+    position: absolute;
+    height: 30vh;
+    bottom: 10px;
+    width: 100%;
+}

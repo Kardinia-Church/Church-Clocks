@@ -10,6 +10,7 @@ module.exports = function() {
     this.parent = undefined;
     this.storedInformation = {};
     this.connected = false;
+    this.enabled = false;
 
     //Attempt to setup
     this.setup = function(parent) {
@@ -79,11 +80,13 @@ module.exports = function() {
     },
 
     //Attempt connection
-    this.connect = function() {
+    this.connect = async function() {
         var object = this;
         this.parent.emit("connectionStatus", this.parent.generateConnectionState(this.function, "connecting"));
         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
-        this.readSettings();
+        await this.readSettings();
+
+        if (!this.enabled) { return; }
         
         var socketAddr = "ws://" + object.host + ":" + object.port + "/stagedisplay";
         try { 
@@ -128,6 +131,7 @@ module.exports = function() {
     this.writeSettings = function(host, port, password, callback) {
         var object = this;
         var settings = "Church Clocks ProPresenter Configuration File\n\n";
+        settings += "enabled=false\n";
         settings += "host=" + host + "\n";
         settings += "port=" + port + "\n";
         settings += "password=" + password + "\n";

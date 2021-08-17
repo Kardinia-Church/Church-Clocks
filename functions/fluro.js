@@ -1,3 +1,4 @@
+const { UV_FS_O_FILEMAP } = require('constants');
 const Fluro = require('fluro');
 const fs = require('fs');
 
@@ -11,129 +12,262 @@ module.exports = function () {
     this.connected = false;
     this.updaterInterval = undefined;
     this.enabled = false;
+    this.hasConfigurableItems = true;
 
-
-    this.queryFluroPlan = async () => {
-
-        var self = this;
-        var object = this;
-
-        // If planID is set in settings, resolve
-        if (self.planID) {
-            return new Promise((resolve, reject) => {
-                resolve(self.planID);
-            });
-        };
-
-        // Initialise current date default
-        let date = new Date();
-        let currentDate = self.fluro.date.formatDate(date, 'YYYY-MM-DD')
-
-        // If event ID is set, get plan ID based on event ID
-        if (self.eventID) {
-            return new Promise((resolve, reject) => {
-
-                self.fluro.api.get('/content/get/' + self.eventID)
-                    .then(function (res) {
-                        if (res.data.plans.length == 0) {
-                            object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "The selected event does not have any plans"));
-
-                            reject("no plans for the current event");
+    //Handle incoming requests
+    this.handleIncoming = function (message) {
+        if (message === undefined) { return false; }
+        if (message.function == this.function) {
+            switch (message.command) {
+                case "clearClock": {
+                    this.fetch();
+                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
+                    return true;
+                }
+                case "setURL": {
+                    //This uses the live.fluro.io website!
+                    //Check password
+                    if (message.passwordCorrect == true) {
+                        var validURL = false;
+                        if(message.value !== "") {
+                            var split = message.value.split("/");
+                            if(split.length == 5) {
+                                this.realm = "";
+                                this.track = "";
+                                this.date = "";
+                                this.eventID = "";
+                                this.planID = split[4];
+                                validURL = true;
+                            }
                         }
-                        resolve(res.data.plans[0]._id)
+
+                        if(validURL == true) {
+                            this.fetch();
+                        }
+                        else {
+                            this.parent.emit("error", this.parent.generateErrorState(this.function, "validationError", "URL is not in the correct format"));
+                        }
+
+                        return true;
+                    }
+                    else {
+                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        return true;
+                    }
+                    return false;
+                }
+                case "getConfigurableItems": {
+                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Sending configurable items to the configurator"));
+
+                    this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "getConfigurableItems", {
+                        apiKey: {
+                            title: "API Key",
+                            description: "Fluro's API Key",
+                            value: "unchanged",
+                            type: "password"
+                        },
+                        realmId: {
+                            title: "Realm ID",
+                            description: "The realm to search in",
+                            value: this.realm,
+                            type: "text"
+                        },
+                        track: {
+                            title: "Track",
+                            description: "The track",
+                            value: this.track,
+                            type: "text"
+                        },
+                        date: {
+                            title: "Date",
+                            description: "A date to search for events in",
+                            value: this.date,
+                            type: "text"
+                        },
+                        eventID: {
+                            title: "Event ID",
+                            description: "A specific event id to latch to",
+                            value: this.eventID,
+                            type: "text"
+                        },
+                        planID: {
+                            title: "Plan ID",
+                            description: "A specific plan id to latch to",
+                            value: this.planID,
+                            type: "text"
+                        }
+                    }));
+                    return true;
+                }
+                case "setConfigurableItems": {
+                    var self = this;
+
+                    //Check password
+                    if (message.passwordCorrect == true) {
+
+                        //Populate unchanged values with the current values
+                        if (message.value["apiKey"] === undefined || message.value["apiKey"] == "unchanged") {
+                            message.value["apiKey"] = this.apiKey;
+                        }
+                        if (message.value["realmId"] === undefined || message.value["realmId"] == "unchanged") {
+                            message.value["realmId"] = this.realm;
+                        }
+                        if (message.value["track"] === undefined || message.value["track"] == "unchanged") {
+                            message.value["track"] = this.track;
+                        }
+                        if (message.value["date"] === undefined || message.value["date"] == "unchanged") {
+                            message.value["date"] = this.date;
+                        }
+                        if (message.value["eventID"] === undefined || message.value["eventID"] == "unchanged") {
+                            message.value["eventID"] = this.eventID;
+                        }
+                        if (message.value["planID"] === undefined || message.value["planID"] == "unchanged") {
+                            message.value["planID"] = this.planID;
+                        }
+
+                        //Attempt to write the settings
+                        this.writeSettings(message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], function (success) {
+                            if (success == true) {
+                                self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
+                                self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
+                            }
+                            else {
+                                self.parent.emit("error", self.parent.generateErrorState(self.function, "configuration", "Failed to save configuration"));
+                            }
+                        });
+                        return true;
+                    }
+                    else {
+                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        return true;
+                    }
+                    break;
+                }
+            }
+        }
+    },
+
+        this.queryFluroPlan = async () => {
+
+            var self = this;
+            var object = this;
+
+            // If planID is set in settings, resolve
+            if (self.planID) {
+                return new Promise((resolve, reject) => {
+                    resolve(self.planID);
+                });
+            };
+
+            // Initialise current date default
+            let date = new Date();
+            let currentDate = self.fluro.date.formatDate(date, 'YYYY-MM-DD')
+
+            // If event ID is set, get plan ID based on event ID
+            if (self.eventID) {
+                return new Promise((resolve, reject) => {
+
+                    self.fluro.api.get('/content/get/' + self.eventID)
+                        .then(function (res) {
+                            if (res.data.plans.length == 0) {
+                                object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "The selected event does not have any plans"));
+
+                                reject("no plans for the current event");
+                            }
+                            resolve(res.data.plans[0]._id)
+                        })
+                        .catch(err => {
+                            reject("Error fetching event from Fluro")
+                        })
+                }).catch(err => {
+                    object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", err));
+                });
+            }
+
+
+            // Initialise filter object
+            var filter = {
+                operator: 'and',
+                filters: [{
+                    key: 'status',
+                    comparator: 'in',
+                    values: ['active'],
+                }]
+            }
+
+            // Realm ID from settings
+            if (self.realm) {
+                filter.filters.push({
+                    key: "_event.realms",
+                    comparator: "==",
+                    title: "Event Realms",
+                    value: self.realm,
+                    dataType: "reference"
+                })
+            }
+
+            // Track ID from settings
+            if (self.track) {
+                filter.filters.push({
+                    key: 'track',
+                    comparator: '==',
+                    value: self.track,
+                    dataType: "reference"
+                })
+            }
+
+            // If no date is set, use currentDate
+            if (!self.date) {
+
+                filter.filters.push({
+                    key: "_event.startDate",
+                    comparator: "datesameday",
+                    value: currentDate,
+                    dataType: "date",
+                })
+
+            } else {
+
+                // use Date from Settings
+                filter.filters.push({
+                    key: "_event.startDate",
+                    comparator: "datesameday",
+                    value: self.date,
+                    dataType: "date"
+                })
+
+            }
+
+            // TODO: Make these dynamic - Fluro requires a date range (don't query too many)
+            let startDate = "2021-01-01T14:00:00.000Z"
+            let endDate = "2021-12-01T14:00:00.000Z"
+
+            // Initailise criteria object for Fluro
+            var criteria = {
+                allDefinitions: true,
+                filter,
+                startDate,
+                endDate,
+                timezone: 'Australia/Melbourne'
+            }
+
+
+            return new Promise((resolve, reject) => {
+
+                self.fluro.content.filter('plan', criteria)
+                    .then(function (res) {
+                        if (res.length == 0) {
+                            reject("No plan found for current criteria")
+                        };
+                        resolve(res[0]._id)
                     })
                     .catch(err => {
-                        reject("Error fetching event from Fluro")
+                        reject("Error fetching data from Fluro")
                     })
             }).catch(err => {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", err));
             });
-        }
-
-
-        // Initialise filter object
-        var filter = {
-            operator: 'and',
-            filters: [{
-                key: 'status',
-                comparator: 'in',
-                values: ['active'],
-            }]
-        }
-
-        // Realm ID from settings
-        if (self.realm) {
-            filter.filters.push({
-                key: "_event.realms",
-                comparator: "==",
-                title: "Event Realms",
-                value: self.realm,
-                dataType: "reference"
-            })
-        }
-
-        // Track ID from settings
-        if (self.track) {
-            filter.filters.push({
-                key: 'track',
-                comparator: '==',
-                value: self.track,
-                dataType: "reference"
-            })
-        }
-
-        // If no date is set, use currentDate
-        if (!self.date) {
-
-            filter.filters.push({
-                key: "_event.startDate",
-                comparator: "datesameday",
-                value: currentDate,
-                dataType: "date",
-            })
-
-        } else {
-
-            // use Date from Settings
-            filter.filters.push({
-                key: "_event.startDate",
-                comparator: "datesameday",
-                value: self.date,
-                dataType: "date"
-            })
-
-        }
-
-        // TODO: Make these dynamic - Fluro requires a date range (don't query too many)
-        let startDate = "2021-01-01T14:00:00.000Z"
-        let endDate = "2021-12-01T14:00:00.000Z"
-
-        // Initailise criteria object for Fluro
-        var criteria = {
-            allDefinitions: true,
-            filter,
-            startDate,
-            endDate,
-            timezone: 'Australia/Melbourne'
-        }
-
-
-        return new Promise((resolve, reject) => {
-
-            self.fluro.content.filter('plan', criteria)
-                .then(function (res) {
-                    if (res.length == 0) {
-                        reject("No plan found for current criteria")
-                    };
-                    resolve(res[0]._id)
-                })
-                .catch(err => {
-                    reject("Error fetching data from Fluro")
-                })
-        }).catch(err => {
-            object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", err));
-        });
-    };
+        };
 
 
     this.getData = async (itemID) => {
@@ -227,7 +361,7 @@ module.exports = function () {
 
         // Initialise Fluro object
 
-        if(!this.enabled){return;}
+        if (!this.enabled) { return; }
 
         object.fluro = new Fluro({
             apiURL: API_URL,
@@ -263,6 +397,7 @@ module.exports = function () {
     this.writeSettings = function (apiKey, realm, track, date, eventID, planID, callback) {
         var object = this;
         var settings = "Church Clocks Fluro Configuration File\n\n";
+        settings += "enabled=false\n";
         settings += "apiKey=" + (apiKey || "") + "\n";
         settings += "realm=" + (realm || "") + "\n";
         settings += "track=" + (track || "") + "\n";
@@ -270,7 +405,7 @@ module.exports = function () {
         settings += "eventID=" + (eventID || "") + "\n";
         settings += "planID=" + (planID || "") + "\n";
 
-        fs.writeFileSync(this.filePath + "fluroSettings.txt", settings, "utf-8", function (err) {
+        fs.writeFile(this.filePath + "fluroSettings.txt", settings, "utf-8", function (err) {
             if (err) { object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if (callback) { callback(false); } }
             else {
                 object.parent.emit("information", object.parent.generateInformationEvent(object.function, "information", "Settings file was written successfully"));
@@ -284,6 +419,7 @@ module.exports = function () {
         try {
             var data = fs.readFileSync(this.filePath + "fluroSettings.txt");
             try {
+                object.enabled = data.toString().split("enabled=")[1].split("\n")[0] == "true";
                 object.apiKey = data.toString().split("apiKey=")[1].split("\n")[0];
                 object.realm = data.toString().split("realm=")[1].split("\n")[0];
                 object.track = data.toString().split("track=")[1].split("\n")[0];
@@ -302,8 +438,11 @@ module.exports = function () {
             }
             catch (e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined);
-                object.readSettings(object, callback);
+                object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function(success) {
+                    if(success == true) {
+                        object.readSettings(object, callback);
+                    }
+                });
             }
         }
         catch (e) {

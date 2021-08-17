@@ -11,28 +11,30 @@ app.js: Main entry point
     - webSocketPort: The port of the websocket
 */
 
-const {EventEmitter} = require("events");
+const { EventEmitter } = require("events");
 const WebSocket = require('ws');
 const http = require('http');
 const fs = require("fs");
-const url = require('url'); 
+const url = require('url');
 const os = require('os');
-module.exports = class ChurchClocks extends EventEmitter{
-    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955, enableWebServer = false, webServerPort = 80, filePath=os.homedir() + "/.church-clocks/") {
+module.exports = class ChurchClocks extends EventEmitter {
+    constructor(enableWebSocket = false, webSocketPassword = "", webSocketPort = 9955, enableWebServer = false, webServerPort = 80, filePath = os.homedir() + "/.church-clocks/") {
         super();
         var object = this;
         this.filePath = filePath;
 
         this.enableWebSocket = enableWebSocket;
         this.enableWebServer = enableWebServer;
-        if(this.enableWebSocket) {
+        this.webServerPort = webServerPort;
+        this.webSocketPort = webSocketPort;
+        if (this.enableWebSocket) {
             object.emit("information", object.generateInformationEvent("application", "websocket", "Websocket enabled"));
             this.connections = [];
             this.wsPassword = webSocketPassword;
             this.wss = new WebSocket.Server({ port: webSocketPort });
 
-            object.on("connectionStatus", function(message) {
-                if(object.wss.clients.size !== 0) {
+            object.on("connectionStatus", function (message) {
+                if (object.wss.clients.size !== 0) {
                     object.wss.clients.forEach(function each(client) {
                         if (client.readyState === WebSocket.OPEN) {
                             client.send(JSON.stringify({
@@ -43,8 +45,8 @@ module.exports = class ChurchClocks extends EventEmitter{
                     });
                 }
             });
-            object.on("functionEvent", function(message) {
-                if(object.wss.clients.size !== 0) {
+            object.on("functionEvent", function (message) {
+                if (object.wss.clients.size !== 0) {
                     object.wss.clients.forEach(function each(client) {
                         if (client.readyState === WebSocket.OPEN) {
                             client.send(JSON.stringify({
@@ -55,8 +57,8 @@ module.exports = class ChurchClocks extends EventEmitter{
                     });
                 }
             });
-            object.on("information", function(message) {
-                if(object.wss.clients.size !== 0) {
+            object.on("information", function (message) {
+                if (object.wss.clients.size !== 0) {
                     object.wss.clients.forEach(function each(client) {
                         if (client.readyState === WebSocket.OPEN) {
                             client.send(JSON.stringify({
@@ -67,8 +69,8 @@ module.exports = class ChurchClocks extends EventEmitter{
                     });
                 }
             });
-            object.on("error", function(message) {
-                if(object.wss.clients.size !== 0) {
+            object.on("error", function (message) {
+                if (object.wss.clients.size !== 0) {
                     object.wss.clients.forEach(function each(client) {
                         if (client.readyState === WebSocket.OPEN) {
                             client.send(JSON.stringify({
@@ -79,59 +81,97 @@ module.exports = class ChurchClocks extends EventEmitter{
                     });
                 }
             });
-             
+            object.on("configuration", function (message) {
+                if (object.wss.clients.size !== 0) {
+                    object.wss.clients.forEach(function each(client) {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(JSON.stringify({
+                                "event": "configuration",
+                                "value": message
+                            }));
+                        }
+                    });
+                }
+            });
+            object.on("control", function (message) {
+                if (object.wss.clients.size !== 0) {
+                    object.wss.clients.forEach(function each(client) {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(JSON.stringify({
+                                "event": "control",
+                                "value": message
+                            }));
+                        }
+                    });
+                }
+
+                //Handle control messages
+                if(message.type == "exit") {
+                    object.emit("information", object.generateInformationEvent("application", "Exit", "Exiting process - " + message.reason));
+                    process.exit();
+                }
+            });
+
             //When we get a connection
             this.wss.on("connection", function connection(ws) {
                 object.emit("information", object.generateInformationEvent("application", "websocket", "Client " + object.wss.clients.size + " connected"));
+                //Send generic information
+                var fns = {};
+                for(var i in object.functions) {
+                    fns[object.functions[i].function] = {
+                        "enabled": object.functions[i].enabled,
+                        "hasIncomingHandler": object.functions[i].incomingHandler !== undefined,
+                        "hasConfigurableItems": object.functions[i].hasConfigurableItems == true
+                    }
+                }
 
+                ws.send(JSON.stringify({
+                    "event": "configuration",
+                    "value": {
+                        "type": "webConfiguration",
+                        "functions": fns
+                    }
+                }));
 
                 //If we get a message from this client handle it
-                ws.on("message", function(message) {
+                ws.on("message", function (message) {
                     //If there is a password set then make sure it's correct
                     try {
                         var passCorrect = true;
                         var msg = JSON.parse(message)
 
-                        if(object.wsPassword !== "") {
-                            if(object.wsPassword !== msg.password) {passCorrect = false;}
-                        }
-
-                        if(passCorrect == true) {
-                            //Send the message to the function
-                            object.sendToFunctions({
-                                "function": msg.function,
-                                "command": msg.command,
-                                "value": msg.value
-                            });
-                        }
-                        else {
-                            object.emit("error", object.generateErrorState("application", "authentication", "Password incorrect!"));
-                        }
+                        //Send the message to the function
+                        object.sendToFunctions({
+                            "passwordCorrect": object.wsPassword == msg.password || object.wsPassword == "",
+                            "function": msg.function,
+                            "command": msg.command,
+                            "value": msg.value
+                        });
                     }
-                    catch(e) {object.emit("error", object.generateErrorState("application", "internal", e.toString()));}
+                    catch (e) { object.emit("error", object.generateErrorState("application", "internal", e.toString())); }
                 });
             });
         }
 
         //If webserver is enabled set it up
-        if(this.enableWebServer == true) {
+        if (this.enableWebServer == true) {
             object.emit("information", object.generateInformationEvent("application", "webserver", "Webserver enabled"));
             http.createServer(function (request, response) {
-                var path = url.parse(request.url).pathname; 
+                var path = url.parse(request.url).pathname;
 
-                if(path == "/"){path = "index.html";}
+                if (path == "/") { path = "index.html"; }
 
-                fs.readFile("./web/" + path, function(error, data) {  
-                    if (error) {  
-                        response.writeHead(404);  
-                        response.write("404: Not found");  
-                        response.end();  
+                fs.readFile("./web/" + path, function (error, data) {
+                    if (error) {
+                        response.writeHead(404);
+                        response.write("404: Not found");
+                        response.end();
                     }
                     else {
-                        if(path.includes(".css")){response.writeHead(200, { "Content-Type": "text/css"});}
-                        else if(path.includes(".js")){response.writeHead(200, { "Content-Type": "text/javascript"});}
-                        else{response.writeHead(200, { "Content-Type": "text/html"});}
-                        response.write(data);  
+                        if (path.includes(".css")) { response.writeHead(200, { "Content-Type": "text/css" }); }
+                        else if (path.includes(".js")) { response.writeHead(200, { "Content-Type": "text/javascript" }); }
+                        else { response.writeHead(200, { "Content-Type": "text/html" }); }
+                        response.write(data);
                         response.end();
                     }
                 });
@@ -141,13 +181,13 @@ module.exports = class ChurchClocks extends EventEmitter{
         this.functions = require("./functions/functions.js").getFunctions(this.filePath + "functionSettings/");
 
         //Setup functions
-        for(var i in this.functions) {
+        for (var i in this.functions) {
             this.functions[i].setup(this);
         }
     }
 
     //Generate the connection state emitter
-    generateConnectionState(func, state){
+    generateConnectionState(func, state) {
         return {
             "function": func,
             "state": state
@@ -155,7 +195,7 @@ module.exports = class ChurchClocks extends EventEmitter{
     }
 
     //Generate the error state emitter
-    generateErrorState(func, type, error){
+    generateErrorState(func, type, error) {
         return {
             "function": func,
             "type": type,
@@ -172,26 +212,43 @@ module.exports = class ChurchClocks extends EventEmitter{
         }
     }
 
+    //Generate a control event
+    generateControlEvent(type, reason) {
+        return {
+            type: type,
+            reason: reason
+        }
+    }
+
     //Send a message to the internal functions to process something
     sendToFunctions(message) {
         var funcFound = false;
-        for(var i in this.functions) {
-            if(this.functions[i].handleIncoming(message) !== false) {funcFound = true; break;}
+        for (var i in this.functions) {
+            if(this.functions[i].function == message.function) {
+                try {
+                    var result = this.functions[i].handleIncoming(message);
+                    if (result == true) { funcFound = true; break; }
+                }
+                catch (e) { }
+            }
         }
 
-        if(funcFound == false){
+        if (funcFound == false) {
             this.emit("error", this.generateErrorState("application", "functionRequest", "Failed to find requested function"));
         }
     }
-    
+
     //Attempt connection to all the modules
     connect() {
         var success = true;
         this.emit("connectionStatus", this.generateConnectionState("application", "Attempting Connection"));
+        this.emit("information", this.generateInformationEvent("application", "configuration", "Web Socket Enabled: " + this.enableWebSocket));
+        this.emit("information", this.generateInformationEvent("application", "configuration", "Web Server Port: " + this.webServerPort));
+        this.emit("information", this.generateInformationEvent("application", "configuration", "Web Server Enabled: " + this.enableWebServer));
+        this.emit("information", this.generateInformationEvent("application", "configuration", "Web Socket Port: " + this.webSocketPort));
 
         //Connect functions
-        for(var i in this.functions) {
-            this.functions[i].enabled = this.enableWebSocket || this.enableWebServer;
+        for (var i in this.functions) {
             this.functions[i].connect();
         }
     }

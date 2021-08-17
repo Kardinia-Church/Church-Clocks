@@ -7,6 +7,8 @@ module.exports = function() {
     this.connected = false;
     this.updaterInterval = undefined;
     this.run = false;
+    this.hasConfigurableItems = false;
+    this.enabled = false;
 
     this.serviceId = "";
     this.username = "";
@@ -92,6 +94,7 @@ module.exports = function() {
         }
         catch(e) {
             object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Invalid service or other error cannot proceed: " + e));
+            await page.screenshot({path: 'elvanto-error-screenshot.png'});
         }
 
         object.parent.emit("information", object.parent.generateInformationEvent(object.function, "grabber", "Exited grabber"));
@@ -127,16 +130,29 @@ module.exports = function() {
         if(message === undefined){return false;}
         if(message.function == "elvanto") {
             switch(message.command) {
-                case "setService": {
+                case "setURL": {
                     this.run = false;
                     this.storedInformation = {};
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Setting service"));
-                    this.serviceId = message.value;
-                    this.run = true;
-                    main(this);
+                    
+                    //Parse the URL
+                    if(!!new RegExp('^(https?:\\/\\/)?'+
+                    '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|'+
+                    '((\\d{1,3}\\.){3}\\d{1,3}))'+
+                    '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*'+
+                    '(\\?[;&a-z\\d%_.~+=-]*)?'+
+                    '(\\#[-a-z\\d_]*)?$','i').test(message.value) == true) {
+                        this.serviceId = message.value;
+                        this.run = true;
+                        main(this);
+                    }
+                    else {
+                        this.parent.emit("error", this.parent.generateErrorState(this.function, "validationError", "URL is not in the correct format"));
+                    }
+
                     return true;
                 }
-                case "clearService": {
+                case "clearClock": {
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clearing service"));
                     this.run = false;
                     break;
@@ -155,11 +171,13 @@ module.exports = function() {
     }
 
     //Attempt connection
-    this.connect = function() {
+    this.connect = async function() {
         var object = this;
         this.parent.emit("connectionStatus", this.parent.generateConnectionState(this.function, "standby"));
         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
-        this.readSettings();
+        await this.readSettings();
+
+        if (!this.enabled) { return; }
     }
 
     //Write the settings file though a prompt (used for the install script)
@@ -175,6 +193,7 @@ module.exports = function() {
     this.writeSettings = function(user, password, callback, puppeteerExecutablePath = "") {
         var object = this;
         var settings = "Church Clocks Elvanto Configuration File\n\n";
+        settings += "enabled=false\n";
         settings += "username=" + user + "\n";
         settings += "password=" + password + "\n";
         settings += "puppeteerExecutablePath=" + puppeteerExecutablePath + "\n";    
