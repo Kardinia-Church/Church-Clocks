@@ -21,6 +21,5 @@ button {
     overflow: scroll;
     position: absolute;
     height: 30vh;
-    bottom: 10px;
     width: 100%;
 }

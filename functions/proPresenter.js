@@ -122,16 +122,16 @@ module.exports = function() {
     this.writeSettingsPrompt = function() {
         var object = this;
         callback = function(values, callback) {
-            object.writeSettings(values[0], values[1], values[2], callback);
+            object.writeSettings(true, values[0], values[1], values[2], callback);
         }
         return {"values": ["Host", "Port", "Password"], "callback": callback};
     }
 
     //Write the current settings to file
-    this.writeSettings = function(host, port, password, callback) {
+    this.writeSettings = function(enabled, host, port, password, callback) {
         var object = this;
         var settings = "Church Clocks ProPresenter Configuration File\n\n";
-        settings += "enabled=false\n";
+        settings += "enabled=" + (enabled || false) + "\n";
         settings += "host=" + host + "\n";
         settings += "port=" + port + "\n";
         settings += "password=" + password + "\n";
@@ -162,7 +162,7 @@ module.exports = function() {
             }
             catch(e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>"); 
+                object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>"); 
                 object.readSettings(object, callback);
             }
         }
@@ -170,7 +170,7 @@ module.exports = function() {
             switch(e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>", function(success) {
+                    object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>", function(success) {
                         if(success == true) {
                             object.readSettings(object, callback);
                         }

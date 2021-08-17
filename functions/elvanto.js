@@ -155,7 +155,7 @@ module.exports = function() {
                 case "clearClock": {
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clearing service"));
                     this.run = false;
-                    break;
+                    return true;
                 }
             }
         }
@@ -184,16 +184,16 @@ module.exports = function() {
     this.writeSettingsPrompt = function() {
         var object = this;
         callback = function(values, callback) {
-            object.writeSettings(values[0], values[1], callback, values[2]);
+            object.writeSettings(true, values[0], values[1], callback, values[2]);
         }
         return {"values": ["Username", "Password", "puppeteerExecutablePath (default empty)"], "callback": callback};
     }
 
     //Write the current settings to file
-    this.writeSettings = function(user, password, callback, puppeteerExecutablePath = "") {
+    this.writeSettings = function(enabled, user, password, callback, puppeteerExecutablePath = "") {
         var object = this;
         var settings = "Church Clocks Elvanto Configuration File\n\n";
-        settings += "enabled=false\n";
+        settings += "enabled=" + (enabled || false) + "\n";
         settings += "username=" + user + "\n";
         settings += "password=" + password + "\n";
         settings += "puppeteerExecutablePath=" + puppeteerExecutablePath + "\n";    
@@ -226,7 +226,7 @@ module.exports = function() {
             }
             catch(e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>"); 
+                object.writeSettings(false, "<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>"); 
                 object.readSettings(object, callback);
             }
         }
@@ -234,7 +234,7 @@ module.exports = function() {
             switch(e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>", function(success) {
+                    object.writeSettings(false, "<YOUR_USERNAME_HERE>", "<YOUR_PASSWORD_HERE>", function(success) {
                         if(success == true) {
                             object.readSettings(object, callback);
                         }

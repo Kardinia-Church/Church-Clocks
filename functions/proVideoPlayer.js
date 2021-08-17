@@ -119,17 +119,17 @@ module.exports = function() {
     this.writeSettingsPrompt = function() {
         var object = this;
         callback = function(values, callback) {
-            object.writeSettings(values[0], values[1], values[2], values[3], callback);
+            object.writeSettings(true, values[0], values[1], values[2], values[3], callback);
         }
         return {"values": ["Host", "Port", "API Location (default /api/0/)", "Auth Token (or Empty)"], "callback": callback};
     }
 
     //Write the current settings to file
-    this.writeSettings = function(host, port, apiLocation, authToken, callback) {
+    this.writeSettings = function(enabled, host, port, apiLocation, authToken, callback) {
         var object = this;
         var settings = "";
         var settings = "Church Clocks ProVideoPlayer Configuration File\n\n";
-        settings += "enabled=false\n";
+        settings += "enabled=" + (enabled || false) + "\n";
         settings += "host=" + host + "\n";
         settings += "port=" + port + "\n";
         settings += "apiLocation=" + apiLocation + "\n";
@@ -165,7 +165,7 @@ module.exports = function() {
             }
             catch(e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>"); 
+                object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>"); 
                 object.readSettings(object, callback);
             }
         }
@@ -173,7 +173,7 @@ module.exports = function() {
             switch(e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>", function(success) {
+                    object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>", function(success) {
                         if(success == true) {
                             object.readSettings(object, callback);
                         }

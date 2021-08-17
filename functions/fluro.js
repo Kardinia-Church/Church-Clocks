@@ -54,7 +54,6 @@ module.exports = function () {
                         this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
                         return true;
                     }
-                    return false;
                 }
                 case "getConfigurableItems": {
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Sending configurable items to the configurator"));

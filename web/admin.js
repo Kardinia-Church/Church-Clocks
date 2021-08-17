@@ -6,7 +6,7 @@ var func = undefined;
 //When the window loads
 window.onload = function () {
     openSocket(function (connected) {
-        if(connected) {
+        if (connected) {
         }
         else {
         }
@@ -14,14 +14,14 @@ window.onload = function () {
     });
 
     //When the user sets a clock
-    document.getElementById("setClock").onclick = function() {
+    document.getElementById("setClock").onclick = function () {
         var fluro = document.getElementById("fluroURL");
         var elvanto = document.getElementById("elvantoURL");
 
-        if(fluro.value != "" && elvanto.value != "") {
+        if (fluro.value != "" && elvanto.value != "") {
             alert("Please only set 1 clock. You cannot have both Fluro and Elvanto at the same time");
         }
-        else if(fluro.value != "") {
+        else if (fluro.value != "") {
             send(JSON.stringify({
                 "password": document.getElementById("password").value,
                 "function": "fluro",
@@ -29,7 +29,7 @@ window.onload = function () {
                 "value": document.getElementById("fluroURL").value
             }));
         }
-        else if(elvanto.value != "") {
+        else if (elvanto.value != "") {
             clearClocks();
             send(JSON.stringify({
                 "password": document.getElementById("password").value,
@@ -44,7 +44,7 @@ window.onload = function () {
     }
 
     //When the user clears a clock
-    document.getElementById("clearClock").onclick = function() {
+    document.getElementById("clearClock").onclick = function () {
         clearClocks();
     }
 }
@@ -97,27 +97,28 @@ var openSocket = function (connectionCallback) {
     ws.onmessage = function (message) {
         message = JSON.parse(message.data);
         console.log(message);
-        switch(message.event) {
+        switch (message.event) {
             case "configuration": {
-                if(message.value.type == "webConfiguration") {
-                    if(message.value.functions["fluro"].enabled == true) {
+                if (message.value.type == "webConfiguration") {
+                    if (message.value.functions["fluro"].enabled == true) {
                         document.getElementById("clocks").style.display = "block";
                         document.getElementById("fluroClock").style.display = "block";
                         document.getElementById("fluroClock").style.float = "";
                     }
-                    if(message.value.functions["elvanto"].enabled == true) {
+                    if (message.value.functions["elvanto"].enabled == true) {
                         document.getElementById("clocks").style.display = "block";
                         document.getElementById("elvantoClock").style.display = "block";
                         document.getElementById("elvantoClock").style.float = "";
                     }
-                    if(message.value.functions["fluro"].enabled == true && message.value.functions["elvanto"].enabled == true) {
+                    if (message.value.functions["fluro"].enabled == true && message.value.functions["elvanto"].enabled == true) {
                         document.getElementById("fluroClock").style.float = "left";
-                        document.getElementById("elvantoClock").style.float = "right";
+                        document.getElementById("elvantoClock").style.float = "right";   
                     }
-                    for(var i in message.value.functions) {
-                        if(message.value.functions[i].hasConfigurableItems == true) {
+                    document.getElementById("advancedButtons").innerHTML = "";
+                    for (var i in message.value.functions) {
+                        if (message.value.functions[i].hasConfigurableItems == true) {
                             var button = document.createElement("button");
-                            button.onclick = function(event) {
+                            button.onclick = function (event) {
                                 window.location.href = './changeSettings.html?function=' + event.target.getAttribute("function");
                             };
                             button.setAttribute("function", i);
@@ -126,9 +127,9 @@ var openSocket = function (connectionCallback) {
                         }
                     }
                 }
-                else if(message.value.type == "configurationSuccess") {
+                else if (message.value.type == "configurationSuccess") {
                     alert("Saved successful! Restarting...");
-                    setTimeout(function() {
+                    setTimeout(function () {
                         window.location.reload();
                     }, 5000);
                 }
@@ -136,7 +137,7 @@ var openSocket = function (connectionCallback) {
             }
             case "error": {
                 addConsoleInformation(message.value.function, message.value.type, message.value.error, "red");
-                if(message.value.type == "authenticationError") {
+                if (message.value.type == "authenticationError") {
                     alert("Sorry that password was incorrect");
                 }
                 break;
@@ -150,7 +151,7 @@ var openSocket = function (connectionCallback) {
 }
 
 //Add information to the information console
-function addConsoleInformation(a, b, text, color="black") { 
+function addConsoleInformation(a, b, text, color = "black") {
     var temp = "[" + a + "][" + b + "] - " + text;
     document.getElementById("consoleInformation").innerHTML += "<p style='color:" + color + "'>" + temp + "</p>";
     document.getElementById("consoleInformation").scrollTop = document.getElementById("consoleInformation").scrollHeight;
