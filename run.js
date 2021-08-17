@@ -67,7 +67,7 @@ function readSettings(callback) {
 
             callback(true);
         }
-        catch(e) {console.log("Settings file was corupt. It was reset"); writeDefaults(); callback(false);}
+        catch(e) {console.log("Settings file was corrupt. It was reset"); writeDefaults(); callback(false);}
     }
     catch(e) {console.log("Settings file not found. It was created"); writeDefaults(); callback(false);}
 }
@@ -81,7 +81,7 @@ readSettings(function(success) {
         console.log("Information Update [" + message.function + "][" + message.type + "]: " + message.value);
     });
     clocks.on("functionEvent", function(message) {
-        console.log("Got Function Event [" + message.function + "][" + message.type + "]: " + JSON.stringify(message.value));
+        //console.log("Got Function Event [" + message.function + "][" + message.type + "]: " + JSON.stringify(message.value));
     });
     clocks.on("error", function(message) {
         console.log("Error! [" + message.function + "][" + message.type + "]: " + message.error);

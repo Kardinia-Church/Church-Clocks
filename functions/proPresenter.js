@@ -242,8 +242,11 @@ module.exports = function () {
                 }
                 catch (e) {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                    object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>");
-                    object.readSettings(object, callback);
+                    object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "49877", "<YOUR_PASSWORD_HERE>", function(success) {
+                        if(success == true) {
+                            object.readSettings(object, callback);
+                        }
+                    });
                 }
             }
             catch (e) {
