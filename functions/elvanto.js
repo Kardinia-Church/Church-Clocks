@@ -212,6 +212,7 @@ module.exports = function() {
         try {
             var data = fs.readFileSync(this.filePath + "elvantoSettings.txt");
             try {
+                object.enabled = data.toString().split("enabled=")[1].split("\n")[0];
                 object.username = data.toString().split("username=")[1].split("\n")[0];
                 object.password = data.toString().split("password=")[1].split("\n")[0];
                 object.puppeteerExecutablePath =  data.toString().split("puppeteerExecutablePath=")[1].split("\n")[0];

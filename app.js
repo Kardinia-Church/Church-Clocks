@@ -223,18 +223,33 @@ module.exports = class ChurchClocks extends EventEmitter {
     //Send a message to the internal functions to process something
     sendToFunctions(message) {
         var funcFound = false;
-        for (var i in this.functions) {
-            if(this.functions[i].function == message.function) {
-                try {
-                    var result = this.functions[i].handleIncoming(message);
-                    if (result == true) { funcFound = true; break; }
+        if(message.function == "application") {
+            switch(message.command) {
+                case "restart": {
+                    if(message.passwordCorrect == true) {
+                        this.emit("control", this.generateControlEvent("exit", "Restarting process on settings change"));
+                    }
+                    else {
+                        this.emit("error", this.generateErrorState("application", "authenticationError", "Incorrect password"));
+                    }
+                    break;
                 }
-                catch (e) { }
             }
         }
-
-        if (funcFound == false) {
-            this.emit("error", this.generateErrorState("application", "functionRequest", "Failed to find requested function"));
+        else {
+            for (var i in this.functions) {
+                if(this.functions[i].function == message.function) {
+                    try {
+                        var result = this.functions[i].handleIncoming(message);
+                        if (result == true) { funcFound = true; break; }
+                    }
+                    catch (e) { }
+                }
+            }
+    
+            if (funcFound == false) {
+                this.emit("error", this.generateErrorState("application", "functionRequest", "Failed to find requested function"));
+            }
         }
     }
 

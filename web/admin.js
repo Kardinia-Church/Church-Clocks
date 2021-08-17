@@ -168,3 +168,12 @@ function send(message) {
         ws.send(message);
     }
 }
+
+function restart() {
+    send(JSON.stringify({
+        "password": document.getElementById("password").value,
+        "function": "application",
+        "command": "restart",
+        "value": ""
+    }));
+}
