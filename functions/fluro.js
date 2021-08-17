@@ -60,6 +60,12 @@ module.exports = function () {
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Sending configurable items to the configurator"));
 
                     this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "getConfigurableItems", {
+                        enabled: {
+                            title: "Enabled",
+                            description: "Should this function be enabled?",
+                            value: this.enabled,
+                            type: "text"
+                        },
                         apiKey: {
                             title: "API Key",
                             description: "Fluro's API Key",
@@ -106,6 +112,9 @@ module.exports = function () {
                     if (message.passwordCorrect == true) {
 
                         //Populate unchanged values with the current values
+                        if (message.value["enabled"] === undefined || message.value["enabled"] == "unchanged") {
+                            message.value["enabled"] = this.enabled;
+                        }
                         if (message.value["apiKey"] === undefined || message.value["apiKey"] == "unchanged") {
                             message.value["apiKey"] = this.apiKey;
                         }
@@ -126,7 +135,7 @@ module.exports = function () {
                         }
 
                         //Attempt to write the settings
-                        this.writeSettings(message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], function (success) {
+                        this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], function (success) {
                             if (success == true) {
                                 self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
                                 self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
@@ -388,16 +397,16 @@ module.exports = function () {
     this.writeSettingsPrompt = function () {
         var object = this;
         callback = function (values, callback) {
-            object.writeSettings(values[0], values[1], values[2], values[3], values[4], values[5], callback);
+            object.writeSettings("true", values[0], values[1], values[2], values[3], values[4], values[5], callback);
         }
         return { "values": ["API Key", "Realm", "Track", "Date", "eventID", "planID"], "callback": callback };
     }
 
     //Write the current settings to file
-    this.writeSettings = function (apiKey, realm, track, date, eventID, planID, callback) {
+    this.writeSettings = function (enabled, apiKey, realm, track, date, eventID, planID, callback) {
         var object = this;
         var settings = "Church Clocks Fluro Configuration File\n\n";
-        settings += "enabled=false\n";
+        settings += "enabled=" + (enabled || "false") + "\n";
         settings += "apiKey=" + (apiKey || "") + "\n";
         settings += "realm=" + (realm || "") + "\n";
         settings += "track=" + (track || "") + "\n";
@@ -438,7 +447,7 @@ module.exports = function () {
             }
             catch (e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function(success) {
+                object.writeSettings("false", "<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function(success) {
                     if(success == true) {
                         object.readSettings(object, callback);
                     }
@@ -449,7 +458,7 @@ module.exports = function () {
             switch (e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function (success) {
+                    object.writeSettings("false", "<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function (success) {
                         if (success == true) {
                             object.readSettings(object, callback);
                         }
