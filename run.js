@@ -81,10 +81,6 @@ readSettings(function(success) {
         console.log("Information Update [" + message.function + "][" + message.type + "]: " + message.value);
     });
     clocks.on("functionEvent", function(message) {
-
-        if(message.function == "fluro") {
-            console.log(JSON.stringify(message.value));
-        }
         //console.log("Got Function Event [" + message.function + "][" + message.type + "]: " + JSON.stringify(message.value));
     });
     clocks.on("error", function(message) {
