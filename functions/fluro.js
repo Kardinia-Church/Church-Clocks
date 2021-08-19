@@ -46,6 +46,7 @@ module.exports = function () {
                     this.eventID = "";
                     this.fetch();
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
+                    this.parent.emit("control", this.parent.generateControlEvent("exit", "Restarting process to clear fluro handles"));
                     callback(true);
                     return true;
                 }
@@ -457,7 +458,6 @@ module.exports = function () {
             }
 
             object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
-            console.log(object.storedInformation);
         }, 1000);
     };
 
