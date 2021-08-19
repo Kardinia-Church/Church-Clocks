@@ -8,7 +8,7 @@ This module supports running a required script in your own code or can be run di
 When installing the installer should ask if you want to set the settings for each module
 
 # Using as a standalone webserver
-This module includes a standalone script which exposes a websocket and/or a webserver for accesing the clocks
+This module includes a standalone script which exposes a websocket and/or a webserver for accessing the clocks
 
 ## Running
 In order to run as a standalone webserver you must install the module above and run the installer script to configure the configuration files which will be at ```<userdirectory>/.church-clocks```. This script will be ran when installing church-clocks or can be ran again by running ```generateSettings.js```
@@ -155,12 +155,13 @@ In general all functions will output information as events which can be seen bel
 
 ## Fluro settings
 The Fluro module is setup to dynamically grab the next service depending on the settings provided.
-**apiKey:** An API Key from Fluro
-**realm:** The ID of a realm the event(s) are stored in
-**track:** The ID of an event track that the event(s) are stored in
-**date:** Specify a date to get events for (useful for testing) // Should be in `YYYY-MM-DD` format
-**eventID:** Specify a specific event ID (the first plan will be fetched)
-**planID:** Grab a specific plan
+* **apiKey:** An API Key from Fluro
+* **realm:** The ID of a realm the event(s) are stored in
+* **track:** The ID of an event track that the event(s) are stored in
+* **date:** Specify a date to get events for (useful for testing) // Should be in `YYYY-MM-DD` format
+* **eventID:** Specify a specific event ID (the first plan will be fetched)*
+* **planID:** Grab a specific plan
+* **roomIDs:** Used by the setFluroClock.html page to search for events. Can be separated by a ```,```.
 
 ## Controlling functions
 Functions can be sent requests by using the ```sendToFunctions(message)``` function and passing a message as follows:

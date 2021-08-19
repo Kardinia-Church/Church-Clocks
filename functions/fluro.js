@@ -6,6 +6,16 @@ const API_URL = "https://api.fluro.io";
 
 module.exports = function () {
 
+    /** BUG
+     * Currently the web socket doesn't care who sent what message
+     * This for example makes password calls send to everyone
+     * So client 1 can send a login and client 2 will also login
+     * this will need to be fixed..
+     * 
+     * 
+     */
+
+
     this.function = "fluro";
     this.parent = undefined;
     this.storedInformation = {};
@@ -19,9 +29,44 @@ module.exports = function () {
         if (message === undefined) { return false; }
         if (message.function == this.function) {
             switch (message.command) {
+                case "getEvents": {
+                    if (message.passwordCorrect == true) {
+                        var self = this;
+
+                        //Do a fluro API call to get all events within the set realm or all realms
+                        this.getEvents().then((result) => {
+                            self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "events", result));
+                        }).catch((error) => {
+                            console.log(error);
+                            this.parent.emit("error", this.parent.generateErrorState(this.function, "apiCallError", "Something happened trying to get the events from Fluro"));
+                        });
+    
+                        return true;
+                    }
+                    else {
+                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        return true;
+                    }
+                }
                 case "clearClock": {
+                    this.realm = "";
+                    this.track = "";
+                    this.date = "";
+                    this.planID = "";
+                    this.eventID = "";
                     this.fetch();
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
+                    return true;
+                }
+                //Set the event id
+                case "setEvent": {
+                    this.realm = "";
+                    this.track = "";
+                    this.date = "";
+                    this.planID = "";
+                    this.eventID = message.value;
+                    this.fetch();
+                    this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "events", "Event set"));
                     return true;
                 }
                 case "setURL": {
@@ -29,9 +74,9 @@ module.exports = function () {
                     //Check password
                     if (message.passwordCorrect == true) {
                         var validURL = false;
-                        if(message.value !== "") {
+                        if (message.value !== "") {
                             var split = message.value.split("/");
-                            if(split.length == 5) {
+                            if (split.length == 5) {
                                 this.realm = "";
                                 this.track = "";
                                 this.date = "";
@@ -41,7 +86,7 @@ module.exports = function () {
                             }
                         }
 
-                        if(validURL == true) {
+                        if (validURL == true) {
                             this.fetch();
                         }
                         else {
@@ -52,7 +97,6 @@ module.exports = function () {
                     }
                     else {
                         this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
-                        return true;
                     }
                 }
                 case "getConfigurableItems": {
@@ -100,6 +144,18 @@ module.exports = function () {
                             description: "A specific plan id to latch to",
                             value: this.planID,
                             type: "text"
+                        },
+                        roomIDs: {
+                            title: "Room IDs",
+                            description: "Room IDs to show in the event selector in setFluroClock.html. Separated by a ,",
+                            value: this.roomIds,
+                            type: "text"
+                        },
+                        timezone: {
+                            title: "Timezone",
+                            description: "The timezone to set",
+                            value: this.timezone,
+                            type: "text"
                         }
                     }));
                     return true;
@@ -132,9 +188,15 @@ module.exports = function () {
                         if (message.value["planID"] === undefined || message.value["planID"] == "unchanged") {
                             message.value["planID"] = this.planID;
                         }
+                        if (message.value["roomIDs"] === undefined || message.value["roomIDs"] == "unchanged") {
+                            message.value["roomIDs"] = this.roomIds;
+                        }
+                        if (message.value["timezone"] === undefined || message.value["timezone"] == "unchanged") {
+                            message.value["timezone"] = this.timezone;
+                        }
 
                         //Attempt to write the settings
-                        this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], function (success) {
+                        this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], message.value["roomIDs"], message.value["timezone"], function (success) {
                             if (success == true) {
                                 self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
                                 self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
@@ -154,6 +216,50 @@ module.exports = function () {
             }
         }
     },
+
+        //Get a selection of possible events
+        this.getEvents = function (realmId, roomIds) {
+            var self = this;
+            return new Promise((resolve, reject) => {
+                var dateRangeHours = 24 * 3;
+                self.fluro.content.filter("event", {
+                    select: "plans",
+                    allDefinitions: true,
+                    timezone: self.timezone,
+                    startDate: new Date().toISOString(),
+                    endDate: new Date(new Date().getTime() + (dateRangeHours * (1000 * 60 * 60))).toISOString(),
+                    filter: {
+                        operator: "and",
+                        filters: [
+                            {
+                                key: "status",
+                                comparator: "in",
+                                values: ["active"]
+                            },
+                            {
+                                key: "plans",
+                                comparator: "notempty",
+                            },
+                            (self.realm || realmId) ? {
+                                key: "realms",
+                                comparator: "==",
+                                value: realmId || self.realm
+                            } : undefined,
+                            (self.roomIds || roomIds) ? {
+                                key: "rooms",
+                                comparator: "in",
+                                values: roomIds || self.roomIds.split(","),
+                            } : undefined,
+                        ]
+                    }
+                }).then((result) => {
+                    resolve(result);
+                }).catch((error) => {
+                    reject(error);
+                });
+            });
+        },
+
 
         this.queryFluroPlan = async () => {
 
@@ -256,7 +362,7 @@ module.exports = function () {
                 filter,
                 startDate,
                 endDate,
-                timezone: 'Australia/Melbourne'
+                timezone: self.timezone
             }
 
 
@@ -334,9 +440,11 @@ module.exports = function () {
 
             object.getData(object.computedPlanID)
                 .then(item => {
-
-
                     let current = item.data.current || null;
+                    object.storedInformation.event = {
+                        _id: item._id,
+                        title: item.title,
+                    };
                     object.storedInformation.startedAt = item.data.time;
                     object.storedInformation.currentItem = item.schedules.filter(schedule => schedule._id + "-" + schedule.title.split(" ")[0].toLowerCase() == current)[0];
                     object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "information", object.storedInformation.currentItem.title));
@@ -355,6 +463,7 @@ module.exports = function () {
             }
 
             object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
+            console.log(object.storedInformation);
         }, 1000);
     };
 
@@ -402,7 +511,7 @@ module.exports = function () {
     }
 
     //Write the current settings to file
-    this.writeSettings = function (enabled, apiKey, realm, track, date, eventID, planID, callback) {
+    this.writeSettings = function (enabled, apiKey, realm, track, date, eventID, planID, roomIDs, timezone, callback) {
         var object = this;
         var settings = "Church Clocks Fluro Configuration File\n\n";
         settings += "enabled=" + (enabled || "false") + "\n";
@@ -412,6 +521,8 @@ module.exports = function () {
         settings += "date=" + (date || "") + "\n";
         settings += "eventID=" + (eventID || "") + "\n";
         settings += "planID=" + (planID || "") + "\n";
+        settings += "roomIDs=" + (roomIDs || "") + "\n";
+        settings += "timezone=" + (timezone || "Melbourne/Australia") + "\n";
 
         fs.writeFile(this.filePath + "fluroSettings.txt", settings, "utf-8", function (err) {
             if (err) { object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if (callback) { callback(false); } }
@@ -434,6 +545,8 @@ module.exports = function () {
                 object.date = data.toString().split("date=")[1].split("\n")[0];
                 object.eventID = data.toString().split("eventID=")[1].split("\n")[0];
                 object.planID = data.toString().split("planID=")[1].split("\n")[0];
+                object.roomIds = data.toString().split("roomIDs=")[1].split("\n")[0];
+                object.timezone = data.toString().split("timezone=")[1].split("\n")[0];
 
 
                 if (object.apiKey === undefined || object.realm === undefined) {
@@ -446,8 +559,8 @@ module.exports = function () {
             }
             catch (e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("false", "<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function(success) {
-                    if(success == true) {
+                object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
+                    if (success == true) {
                         object.readSettings(object, callback);
                     }
                 });
@@ -457,7 +570,7 @@ module.exports = function () {
             switch (e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("false", "<API_KEY_HERE>", "<SPECIFY_REALM_HERE>", undefined, undefined, undefined, undefined, function (success) {
+                    object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
                         if (success == true) {
                             object.readSettings(object, callback);
                         }
