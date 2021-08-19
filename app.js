@@ -81,18 +81,7 @@ module.exports = class ChurchClocks extends EventEmitter {
                     });
                 }
             });
-            object.on("configuration", function (message) {
-                if (object.wss.clients.size !== 0) {
-                    object.wss.clients.forEach(function each(client) {
-                        if (client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify({
-                                "event": "configuration",
-                                "value": message
-                            }));
-                        }
-                    });
-                }
-            });
+
             object.on("control", function (message) {
                 if (object.wss.clients.size !== 0) {
                     object.wss.clients.forEach(function each(client) {
@@ -125,27 +114,44 @@ module.exports = class ChurchClocks extends EventEmitter {
                     }
                 }
 
-                ws.send(JSON.stringify({
-                    "event": "configuration",
-                    "value": {
-                        "type": "webConfiguration",
-                        "functions": fns
-                    }
-                }));
-
                 //If we get a message from this client handle it
                 ws.on("message", function (message) {
                     //If there is a password set then make sure it's correct
                     try {
-                        var passCorrect = true;
-                        var msg = JSON.parse(message)
+                        var msg = JSON.parse(message);
+                        var passCorrect = object.wsPassword == msg.password || object.wsPassword == "";
+
+                        //If its a applications specific call handle it
+                        if(msg.function == "application") {
+                            switch(msg.command) {
+                                case "login": {
+                                    ws.send(JSON.stringify({
+                                        "event": "response",
+                                        "function": msg.function,
+                                        "command": msg.command,
+                                        "value": {
+                                            correct: passCorrect,
+                                            functions: fns
+                                        }
+                                    }));
+                                    return;
+                                }
+                            }
+                        }
 
                         //Send the message to the function
-                        object.sendToFunctions({
-                            "passwordCorrect": object.wsPassword == msg.password || object.wsPassword == "",
+                        var response = object.sendToFunctions({
+                            "passwordCorrect": passCorrect,
                             "function": msg.function,
                             "command": msg.command,
                             "value": msg.value
+                        }, (result) => {
+                            ws.send(JSON.stringify({
+                                "event": "response",
+                                "function": msg.function,
+                                "command": msg.command,
+                                "value": result
+                            }));
                         });
                     }
                     catch (e) { object.emit("error", object.generateErrorState("application", "internal", e.toString())); }
@@ -221,7 +227,7 @@ module.exports = class ChurchClocks extends EventEmitter {
     }
 
     //Send a message to the internal functions to process something
-    sendToFunctions(message) {
+    sendToFunctions(message, callback) {
         var funcFound = false;
         if(message.function == "application") {
             switch(message.command) {
@@ -240,8 +246,8 @@ module.exports = class ChurchClocks extends EventEmitter {
             for (var i in this.functions) {
                 if(this.functions[i].function == message.function) {
                     try {
-                        var result = this.functions[i].handleIncoming(message);
-                        if (result == true) { funcFound = true; break; }
+                        var result = this.functions[i].handleIncoming(message, callback);
+                        if (result !== false) { funcFound = true; break; }
                     }
                     catch (e) { }
                 }

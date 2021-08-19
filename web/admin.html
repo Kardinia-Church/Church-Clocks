@@ -6,39 +6,46 @@
     </head>
     <body>
         <center>
-            <h1>Quick Settings</h1>
-            <hr>
-            <div id="clocks" style="display: none">
-                <div style="width: 400px; height: 100px">
-                    <div id="fluroClock" style="display: none; float: left">
-                        <h2>Fluro Clock</h2>
-                        <label for="fluroURL">Fluro Live URL</label><br>
-                        <input type="text" id="fluroURL" name="fluroURL"><br><br>
-                    </div>
-                    <div id="elvantoClock" style="display: none; float: right">
-                        <h2>Elvanto Clock</h2>
-                        <label for="elvantoURL">Elvanto Live URL</label><br>
-                        <input type="text" id="elvantoURL" name="elvantoURL"><br><br>
-                    </div>
-                </div>
-                <div>
-                    <label for="password">Password</label><br>
-                    <input type="password" id="password" name="password"><br><br>
-                    <button id="setClock">Set</button><br>
-                    <button style="margin-top: 2vh;" id="clearClock">Clear Clock</button>
-                </div>
+            <div id="login">
+                <h1>Please Login</h1>
+                <label for="password">Password</label></br>
+                <input id="password" type="password"></br>
+                <button onclick="login()">Login</button>
             </div>
-            <hr>
-            <h1>Advanced Settings</h1>
-            <hr>
-            <div id="advancedButtons"></div>
-            <button onclick="restart()">Restart</button>
-            <hr>
-            <h1>Information</h1>
-            <hr>
-            <section id="consoleInformation"></section>
-            <hr>
+            <div id="main" style="display: none">
+                <h1>Quick Settings</h1>
+                <hr>
+                <div id="clocks" style="display: none">
+                    <div style="width: 400px; height: 100px">
+                        <div id="fluroClock" style="display: none; float: left">
+                            <h2>Fluro Clock</h2>
+                            <label for="fluroURL">Fluro Live URL</label><br>
+                            <input type="text" id="fluroURL" name="fluroURL"><br><br>
+                        </div>
+                        <div id="elvantoClock" style="display: none; float: right">
+                            <h2>Elvanto Clock</h2>
+                            <label for="elvantoURL">Elvanto Live URL</label><br>
+                            <input type="text" id="elvantoURL" name="elvantoURL"><br><br>
+                        </div>
+                    </div>
+                    <div>
+                        <button id="setClock">Set</button><br>
+                        <button style="margin-top: 2vh;" id="clearClock">Clear Clock</button>
+                    </div>
+                </div>
+                <hr>
+                <h1>Advanced Settings</h1>
+                <hr>
+                <div id="advancedButtons"></div>
+                <button onclick="restart()">Restart</button>
+                <hr>
+                <h1>Information</h1>
+                <hr>
+                <section id="consoleInformation"></section>
+                <hr>
+            </div>
         </center>
     </body>
+    <script src="./ws.js"></script>
     <script src="./admin.js"></script>
 </html>

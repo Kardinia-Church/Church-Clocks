@@ -5,17 +5,6 @@ const fs = require('fs');
 const API_URL = "https://api.fluro.io";
 
 module.exports = function () {
-
-    /** BUG
-     * Currently the web socket doesn't care who sent what message
-     * This for example makes password calls send to everyone
-     * So client 1 can send a login and client 2 will also login
-     * this will need to be fixed..
-     * 
-     * 
-     */
-
-
     this.function = "fluro";
     this.parent = undefined;
     this.storedInformation = {};
@@ -25,7 +14,7 @@ module.exports = function () {
     this.hasConfigurableItems = true;
 
     //Handle incoming requests
-    this.handleIncoming = function (message) {
+    this.handleIncoming = function (message, callback) {
         if (message === undefined) { return false; }
         if (message.function == this.function) {
             switch (message.command) {
@@ -35,16 +24,17 @@ module.exports = function () {
 
                         //Do a fluro API call to get all events within the set realm or all realms
                         this.getEvents().then((result) => {
-                            self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "events", result));
+                            callback(result);
                         }).catch((error) => {
                             console.log(error);
+                            callback("Something happened.. Please try again");
                             this.parent.emit("error", this.parent.generateErrorState(this.function, "apiCallError", "Something happened trying to get the events from Fluro"));
                         });
-    
+
                         return true;
                     }
                     else {
-                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        callback("Incorrect password");
                         return true;
                     }
                 }
@@ -56,6 +46,7 @@ module.exports = function () {
                     this.eventID = "";
                     this.fetch();
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
+                    callback(true);
                     return true;
                 }
                 //Set the event id
@@ -66,7 +57,8 @@ module.exports = function () {
                     this.planID = "";
                     this.eventID = message.value;
                     this.fetch();
-                    this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "events", "Event set"));
+                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "events", "Event set"));
+                    callback(true);
                     return true;
                 }
                 case "setURL": {
@@ -88,21 +80,21 @@ module.exports = function () {
 
                         if (validURL == true) {
                             this.fetch();
+                            callback(true);
                         }
                         else {
+                            callback("There was a problem with that URL, please double check it");
                             this.parent.emit("error", this.parent.generateErrorState(this.function, "validationError", "URL is not in the correct format"));
                         }
 
                         return true;
                     }
                     else {
-                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        callback("Incorrect password");
                     }
                 }
                 case "getConfigurableItems": {
-                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Sending configurable items to the configurator"));
-
-                    this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "getConfigurableItems", {
+                    callback({
                         enabled: {
                             title: "Enabled",
                             description: "Should this function be enabled?",
@@ -157,7 +149,7 @@ module.exports = function () {
                             value: this.timezone,
                             type: "text"
                         }
-                    }));
+                    });
                     return true;
                 }
                 case "setConfigurableItems": {
@@ -198,17 +190,19 @@ module.exports = function () {
                         //Attempt to write the settings
                         this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], message.value["roomIDs"], message.value["timezone"], function (success) {
                             if (success == true) {
-                                self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
+                                self.parent.emit("information", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
                                 self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
+                                callback(true);
                             }
                             else {
+                                callback("An error occurred, please try again");
                                 self.parent.emit("error", self.parent.generateErrorState(self.function, "configuration", "Failed to save configuration"));
                             }
                         });
                         return true;
                     }
                     else {
-                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        callback("Incorrect password");
                         return true;
                     }
                     break;

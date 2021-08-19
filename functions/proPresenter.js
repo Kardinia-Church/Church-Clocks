@@ -14,13 +14,12 @@ module.exports = function () {
     this.hasConfigurableItems = true;
 
     //Handle incoming requests
-    this.handleIncoming = function (message) {
+    this.handleIncoming = function (message, callback) {
         if (message === undefined) { return false; }
         if (message.function == this.function) {
             switch (message.command) {
                 case "getConfigurableItems": {
-                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Sending configurable items to the configurator"));
-                    this.parent.emit("configuration", this.parent.generateInformationEvent(this.function, "getConfigurableItems", {
+                    callback({
                         enabled: {
                             title: "Enabled",
                             description: "Should this function be enabled?",
@@ -45,7 +44,7 @@ module.exports = function () {
                             value: "unchanged",
                             type: "password"
                         }
-                    }));
+                    });
                     return true;
                 }
                 case "setConfigurableItems": {
@@ -71,17 +70,19 @@ module.exports = function () {
                         //Attempt to write the settings
                         this.writeSettings(message.value["enabled"], message.value["host"], message.value["port"], message.value["password"], function (success) {
                             if (success == true) {
-                                self.parent.emit("configuration", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
+                                self.parent.emit("information", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
+                                callback(true);
                                 self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
                             }
                             else {
+                                callback("Failed to save configuration");
                                 self.parent.emit("error", self.parent.generateErrorState(self.function, "configuration", "Failed to save configuration"));
                             }
                         });
                         return true;
                     }
                     else {
-                        this.parent.emit("error", this.parent.generateErrorState(this.function, "authenticationError", "Incorrect password"));
+                        callback("Incorrect password");
                         return true;
                     }
                     break;

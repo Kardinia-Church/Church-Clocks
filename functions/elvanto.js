@@ -126,7 +126,7 @@ module.exports = function() {
     }
 
     //Handle incoming requests
-    this.handleIncoming = function(message) {
+    this.handleIncoming = function(message, callback) {
         if(message === undefined){return false;}
         if(message.function == "elvanto") {
             switch(message.command) {
@@ -147,6 +147,7 @@ module.exports = function() {
                         main(this);
                     }
                     else {
+                        callback("URL is not in the correct format");
                         this.parent.emit("error", this.parent.generateErrorState(this.function, "validationError", "URL is not in the correct format"));
                     }
 
@@ -155,6 +156,7 @@ module.exports = function() {
                 case "clearClock": {
                     this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clearing service"));
                     this.run = false;
+                    callback(true);
                     return true;
                 }
             }
