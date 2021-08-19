@@ -15,10 +15,10 @@ window.onload = function () {
         switch (message.event) {
             case "response": {
                 if (message.value == false) {
-                    alert("Sorry something happened while handling that request, please try again");
+                    showPopup("Error", "Sorry something happened while handling that request, please try again");
                 }
                 else if (typeof (message.value) == "string") {
-                    alert(message.value);
+                    showPopup("Error", message.value);
                 }
                 else {
                     switch (message.command) {

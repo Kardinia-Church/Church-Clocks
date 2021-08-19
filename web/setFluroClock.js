@@ -9,16 +9,16 @@ window.onload = function () {
         switch (message.event) {
             case "response": {
                 if(message.value == false) {
-                    alert("Sorry something happened while handling that request, please try again");
+                    showPopup("Error", "Sorry something happened while handling that request, please try again");
                 }
                 else if(typeof(message.value) == "string") {
-                    alert(message.value);
+                    showPopup("Error", message.value);
                 }
                 else {
                     switch(message.command) {
                         case "setEvent": {
                             if(message.value == true) {
-                                alert("Event set!");
+                                showPopup("Success!", "The event was set", "green");
                                 if(setPlanId) {
                                     window.location.href = "https://live.fluro.io/plan/" + setPlanId;
                                 }
@@ -76,7 +76,7 @@ window.onload = function () {
 //Attempt to login
 function login() {
     if (ws.readyState != ws.OPEN) {
-        alert("Cannot login as we're not connected to the server, please try refreshing the page or wait a minute");
+        showPopup("Error", "Cannot login as we're not connected to the server, please try refreshing the page or wait a minute");
     }
     else {
         //Attempt to send our request to get services. If this fails we can assume the password is incorrect

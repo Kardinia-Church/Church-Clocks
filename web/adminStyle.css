@@ -1,5 +1,6 @@
 html {
     text-align: center;
+    font-family:Arial, Helvetica, sans-serifl
 }
 
 label {
@@ -12,8 +13,9 @@ input {
 }
 
 button {
-    width: 20vw;
-    height: 5vw;
+    font-size: 1.2em;
+    height: 2vw;
+    padding: 50 50 50 50;
     margin-top: 1vw;
 }
 
@@ -22,4 +24,30 @@ button {
     position: absolute;
     height: 30vh;
     width: 100%;
+}
+
+.serviceButton {
+    border-radius: 25px;
+    background-color: rgba(255, 255, 255, 0.959);
+    width: 50vw;
+    height: 100%;
+    border: solid black 2px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.serviceButton:hover {
+    background-color: rgb(216, 216, 216);
+}
+
+#alert {
+    display: none;
+    position: fixed;
+    z-index: 3;
+    background-color: rgb(255, 58, 58);
+    width: 30vw;
+    height: 20vh;
+    top: calc(20vh - 20vh/2);
+    left: calc(50vw - 30vw/2);
+    border: solid 2px;
 }

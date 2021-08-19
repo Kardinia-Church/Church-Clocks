@@ -18,6 +18,16 @@
      sessionStorage.setItem("password", document.getElementById("password").value);
  }
 
+ function showPopup(header, desc, color="red") {
+     var alert = document.getElementById("alert");
+     alert.getElementsByTagName("h1")[0].innerHTML = header;
+     alert.getElementsByTagName("p")[0].innerHTML = desc;
+     alert.style.backgroundColor = "white";
+     alert.style.borderColor = color;
+     alert.style.display = "block";
+     setTimeout(function(){alert.style.display = "none";}, 1500);
+ }
+
  //Open the websocket
 function openSocket(connectionCallback, messageCallback) {
     if (window.location.protocol == "http:") {
@@ -58,7 +68,7 @@ function openSocket(connectionCallback, messageCallback) {
 function send(message) {
     if (ws.readyState != ws.OPEN) {
         console.log("Websocket is not open it is in " + ws.readyState);
-        alert("Could not send the message because we are disconnected.");
+        showPopup("Error", "Couldn't do that as we're disconnected from the server..");
         location.reload();
     }
     else {
