@@ -25,7 +25,7 @@ function writeDefaults(webSocketEnabled = true, webSocketPassword = "", webSocke
     settings += "* Web Socket Settings *\n";
     settings += "webSocketEnabled=" + webServerEnabled + "\n";
     settings += "webSocketPassword=" + webSocketPassword + "\n";
-    settings += "webSocketPort=9955" + webServerPort + "\n";
+    settings += "webSocketPort=" + webSocketPort + "\n";
 
     settings += "* Web Server Settings *\n";
     settings += "webServerEnabled=" + webServerEnabled + "\n";
