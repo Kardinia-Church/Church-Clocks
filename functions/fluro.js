@@ -59,6 +59,7 @@ module.exports = function () {
                     if (message.passwordCorrect == true) {
                         this.clear(false, true);
                         this.eventID = message.value;
+                        this.setUsingWeb = true;
                         this.start();
                         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "events", "Event set"));
                         callback(true);
@@ -87,6 +88,7 @@ module.exports = function () {
                         if (validURL == true) {
                             this.clear(false, true);
                             this.planID = planId;
+                            this.setUsingWeb = true;
                             this.start();
                             callback(true);
                         }
@@ -442,6 +444,7 @@ module.exports = function () {
         this.computeData = undefined;
         this.dataFetch = undefined;
         this.storedInformation = {};
+        this.parent.emit("functionEvent", this.parent.generateInformationEvent(this.function, "informationChange", this.storedInformation));
 
         if(clearMemory == true) {
             this.realm = "";
@@ -449,6 +452,7 @@ module.exports = function () {
             this.date = "";
             this.planID = "";
             this.eventID = "";
+            this.setUsingWeb = undefined;
         }
 
         if(reloadSettings == true) {
@@ -488,6 +492,13 @@ module.exports = function () {
 
                 object.getData(object.computedPlanID)
                     .then(item => {
+                        //Check that the plan hasn't ended if it has reset (ONLY if it was set using the web gui)
+                        if(item.event.status == "archived" && object.setUsingWeb == true) {
+                            object.parent.emit("information", object.parent.generateInformationEvent(object.function, "information", "Clearing as the plan became archived"));
+                            object.start(true, true);
+                            return;
+                        }
+
                         let current = item.data.current || null;
                         object.storedInformation.event = {
                             _id: item._id,
@@ -594,6 +605,7 @@ module.exports = function () {
                 object.roomIds = data.toString().split("roomIDs=")[1].split("\n")[0];
                 object.timezone = data.toString().split("timezone=")[1].split("\n")[0];
                 object.serviceChangeRedirectURL = data.toString().split("serviceChangeRedirectURL=")[1].split("\n")[0];
+                object.setUsingWeb = false;
 
                 if (object.apiKey === undefined || object.realm === undefined) {
                     throw "invalid settings read";
