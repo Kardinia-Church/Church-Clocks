@@ -21,6 +21,17 @@ window.onload = function () {
                 }
                 else {
                     switch (message.command) {
+                        case "setConfigurableItems": {
+                            if (message.function == func) {
+                                if(message.value == true) {
+                                    showPopup("Success!", "The settings were updated!", "green");
+                                }
+                                else {
+                                    showPopup("Error", "Sorry something happened while handling that request, please try again");
+                                }
+                            }
+                            break;
+                        }
                         case "getConfigurableItems": {
                             if (message.function == func) {
                                 populateSettingFields(message);

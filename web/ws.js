@@ -41,13 +41,13 @@ function openSocket(connectionCallback, messageCallback) {
     ws.onerror = function () {
         console.log("Websocket Error");
         clearTimeout(reconnectAttemper);
-        reconnectAttemper = setTimeout(function () { openSocket(connectionCallback) }, 5000);
+        reconnectAttemper = setTimeout(function () { openSocket(connectionCallback, messageCallback) }, 5000);
         connectionCallback(false);
     }
 
     ws.onclose = function () {
         clearTimeout(reconnectAttemper);
-        reconnectAttemper = setTimeout(function () { openSocket(connectionCallback) }, 5000);
+        reconnectAttemper = setTimeout(function () { openSocket(connectionCallback, messageCallback) }, 5000);
         connectionCallback(false);
     }
 

@@ -185,7 +185,7 @@ module.exports = function () {
         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
         await this.readSettings();
 
-        if (!this.enabled) { return; }
+        if (this.enabled != true) { return; }
 
         clearInterval(this.updaterInterval);
         this.updaterInterval = setInterval(function () {

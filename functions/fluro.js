@@ -1,3 +1,4 @@
+const { clear } = require('console');
 const { UV_FS_O_FILEMAP } = require('constants');
 const Fluro = require('fluro');
 const fs = require('fs');
@@ -42,27 +43,31 @@ module.exports = function () {
                     }
                 }
                 case "clearClock": {
-                    this.realm = "";
-                    this.track = "";
-                    this.date = "";
-                    this.planID = "";
-                    this.eventID = "";
-                    this.fetch();
-                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
-                    this.parent.emit("control", this.parent.generateControlEvent("exit", "Restarting process to clear fluro handles"));
-                    callback(true);
-                    return true;
+                    if (message.passwordCorrect == true) {
+                        this.start(true, true);
+                        this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "Clear clock"));
+                        callback(true);
+                        return true;
+                    }
+                    else {
+                        callback("Incorrect password");
+                        return true;
+                    }
                 }
                 //Set the event id
                 case "setEvent": {
-                    this.realm = "";
-                    this.track = "";
-                    this.date = "";
-                    this.planID = "";
-                    this.eventID = message.value;
-                    this.fetch();
-                    this.parent.emit("information", this.parent.generateInformationEvent(this.function, "events", "Event set"));
-                    callback(true);
+                    if (message.passwordCorrect == true) {
+                        this.clear(false, true);
+                        this.eventID = message.value;
+                        this.start();
+                        this.parent.emit("information", this.parent.generateInformationEvent(this.function, "events", "Event set"));
+                        callback(true);
+                    }
+                    else {
+                        callback("Incorrect password");
+                        return true;
+                    }
+
                     return true;
                 }
                 case "setURL": {
@@ -70,20 +75,19 @@ module.exports = function () {
                     //Check password
                     if (message.passwordCorrect == true) {
                         var validURL = false;
+                        var planId = undefined;
                         if (message.value !== "") {
                             var split = message.value.split("/");
                             if (split.length == 5) {
-                                this.realm = "";
-                                this.track = "";
-                                this.date = "";
-                                this.eventID = "";
-                                this.planID = split[4];
+                                planId = split[4];
                                 validURL = true;
                             }
                         }
 
                         if (validURL == true) {
-                            this.fetch();
+                            this.clear(false, true);
+                            this.planID = planId;
+                            this.start();
                             callback(true);
                         }
                         else {
@@ -204,7 +208,8 @@ module.exports = function () {
                         this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], message.value["roomIDs"], message.value["timezone"], message.value["serviceChangeRedirectURL"], function (success) {
                             if (success == true) {
                                 self.parent.emit("information", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
-                                self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
+                                //self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
+                                self.start(true, true);
                                 callback(true);
                             }
                             else {
@@ -228,7 +233,8 @@ module.exports = function () {
         this.getEvents = function (realmId, roomIds) {
             var self = this;
             return new Promise((resolve, reject) => {
-                var dateRangeHours = 24 * 90;
+                var dateRangeHours = 24 * 3;
+
                 self.fluro.content.filter("event", {
                     select: "plans",
                     allDefinitions: true,
@@ -268,10 +274,11 @@ module.exports = function () {
         },
 
 
+        //Attempt to find a plan id
         this.queryFluroPlan = async () => {
-
             var self = this;
             var object = this;
+            self.parent.emit("information", self.parent.generateInformationEvent(self.function, "information", "Query Fluro for plan"));
 
             // If planID is set in settings, resolve
             if (self.planID) {
@@ -391,6 +398,7 @@ module.exports = function () {
         };
 
 
+    //Attempt to get information on an item
     this.getData = async (itemID) => {
         var self = this;
 
@@ -425,6 +433,43 @@ module.exports = function () {
         return await new Promise(resolve => setTimeout(resolve, ms));
     }
 
+    //Clear the current searchers
+    this.clear = async function (reloadSettings=false, clearMemory=false) {
+        clearInterval(this.computeData);
+        clearInterval(this.dataFetch);
+        clearInterval(this.fetchInterval);
+        this.fetchInterval = undefined;
+        this.computeData = undefined;
+        this.dataFetch = undefined;
+        this.storedInformation = {};
+
+        if(clearMemory == true) {
+            this.realm = "";
+            this.track = "";
+            this.date = "";
+            this.planID = "";
+            this.eventID = "";
+        }
+
+        if(reloadSettings == true) {
+            await this.readSettings();
+        }
+    }
+
+    //Start the handler to query Fluro
+    this.start = async function (reloadSettings=false, clearMemory=false) {
+        var self = this;
+        await this.clear(reloadSettings, clearMemory);
+        if (this.enabled != true) { return; }
+
+        //Every 5 minutes query Fluro for a new plan automatically
+        this.fetchInterval = setInterval(function () {
+            self.fetch();
+        }, 300 * 1000);
+        this.fetch();
+    }
+
+    //Main fetcher
     this.fetch = async () => {
         var object = this;
 
@@ -436,43 +481,39 @@ module.exports = function () {
                 return false;
             });
 
-        // If no plan found, try again in 60 seconds
-        if (!object.computedPlanID) {
-            await delay(60000);
-            return object.fetch();
+        // Poll Fluro for Data every 3 Seconds
+        if (this.dataFetch === undefined) {
+            this.dataFetch = setInterval(function () {
+                if (!object.computedPlanID) { return; }
+
+                object.getData(object.computedPlanID)
+                    .then(item => {
+                        let current = item.data.current || null;
+                        object.storedInformation.event = {
+                            _id: item._id,
+                            title: item.title,
+                        };
+                        object.storedInformation.startedAt = item.data.time;
+                        object.storedInformation.currentItem = item.schedules.filter(schedule => schedule._id + "-" + schedule.title.split(" ")[0].toLowerCase() == current)[0];
+                        object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "information", object.storedInformation.currentItem.title));
+                    })
+                    .catch(err => { return });
+            }, 3000);
         }
 
-        // Poll Fluro for Data every 3 Seconds
-        this.dataFetch = setInterval(function () {
-
-            object.getData(object.computedPlanID)
-                .then(item => {
-                    let current = item.data.current || null;
-                    object.storedInformation.event = {
-                        _id: item._id,
-                        title: item.title,
-                    };
-                    object.storedInformation.startedAt = item.data.time;
-                    object.storedInformation.currentItem = item.schedules.filter(schedule => schedule._id + "-" + schedule.title.split(" ")[0].toLowerCase() == current)[0];
-                    object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "information", object.storedInformation.currentItem.title));
-
-                })
-                .catch(err => { return });
-        }, 3000);
-
         // Compute data and send to frontend every second (update clock)
-        this.computeData = setInterval(function () {
+        if (this.computeData === undefined) {
+            this.computeData = setInterval(function () {
+                if (!object.storedInformation.currentItem) {
+                    object.storedInformation.timeLeftSec = null;
+                } else {
+                    object.storedInformation.timeLeftSec = parseInt(((object.storedInformation.currentItem.duration * 1000) + object.storedInformation.startedAt - Date.now()) / 1000);
+                }
 
-            if (!object.storedInformation.currentItem) {
-                object.storedInformation.timeLeftSec = null;
-            } else {
-                object.storedInformation.timeLeftSec = parseInt(((object.storedInformation.currentItem.duration * 1000) + object.storedInformation.startedAt - Date.now()) / 1000);
-            }
-
-            object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
-        }, 1000);
+                object.parent.emit("functionEvent", object.parent.generateInformationEvent(object.function, "informationChange", object.storedInformation));
+            }, 1000);
+        }
     };
-
 
     //Attempt connection
     this.connect = async function () {
@@ -483,8 +524,7 @@ module.exports = function () {
         var object = this;
 
         // Initialise Fluro object
-
-        if (!this.enabled) { return; }
+        if (this.enabled != true) { return; }
 
         object.fluro = new Fluro({
             apiURL: API_URL,
@@ -494,8 +534,7 @@ module.exports = function () {
         object.fluro.date.defaultTimezone = 'Australia/Melbourne';
 
         // Initiate first fetch
-        object.fetch();
-
+        await this.start();
     }
 
     //Convert date to AM PM
@@ -555,7 +594,6 @@ module.exports = function () {
                 object.roomIds = data.toString().split("roomIDs=")[1].split("\n")[0];
                 object.timezone = data.toString().split("timezone=")[1].split("\n")[0];
                 object.serviceChangeRedirectURL = data.toString().split("serviceChangeRedirectURL=")[1].split("\n")[0];
-
 
                 if (object.apiKey === undefined || object.realm === undefined) {
                     throw "invalid settings read";

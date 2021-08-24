@@ -166,7 +166,7 @@ module.exports = function () {
             this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
             await this.readSettings();
 
-            if (!this.enabled) { return; }
+            if (this.enabled != true) { return; }
 
             var socketAddr = "ws://" + object.host + ":" + object.port + "/stagedisplay";
             try {

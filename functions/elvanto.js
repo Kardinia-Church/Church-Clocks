@@ -179,7 +179,7 @@ module.exports = function() {
         this.parent.emit("information", this.parent.generateInformationEvent(this.function, "information", "readingSettings"));
         await this.readSettings();
 
-        if (!this.enabled) { return; }
+        if (this.enabled != true) { return; }
     }
 
     //Write the settings file though a prompt (used for the install script)
