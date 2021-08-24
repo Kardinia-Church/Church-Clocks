@@ -2,9 +2,6 @@ var setPlanId = undefined;
 
 //When the window loads
 window.onload = function () {
-    //Check for password
-    readStorage();
-
     openSocket((connected) => {
         console.log("Web socket state = " + connected);
     }, (message) => {
@@ -20,7 +17,6 @@ window.onload = function () {
                     switch(message.command) {
                         case "login": {
                             if(message.value.correct == true) {
-                                setStorage();
                                 if (message.value.functions["fluro"].enabled == true) {
                                     document.getElementById("clocks").style.display = "block";
                                     document.getElementById("fluroClock").style.display = "block";

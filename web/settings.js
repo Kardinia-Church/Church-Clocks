@@ -1,6 +1,5 @@
 //When the window loads
 window.onload = function () {
-    readStorage();
     var params = new URLSearchParams(window.location.search);
     func = params.get("function");
     openSocket((connected) => {

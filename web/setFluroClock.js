@@ -1,8 +1,9 @@
 var setPlanId = undefined;
+var setEventId = undefined;
+var redirectURL = "";
 
 //When the window loads
 window.onload = function () {
-    readStorage();
     openSocket((connected) => {
         console.log("Web socket state = " + connected);
     }, (message) => {
@@ -19,50 +20,60 @@ window.onload = function () {
                         case "setEvent": {
                             if(message.value == true) {
                                 showPopup("Success!", "The event was set", "green");
-                                if(setPlanId) {
-                                    window.location.href = "https://live.fluro.io/plan/" + setPlanId;
+                                if(setPlanId || setEventId) {
+                                    var tempURL = redirectURL;
+                                    tempURL = tempURL.replace("<planId>", setPlanId);
+                                    tempURL = tempURL.replace("<eventId>", setEventId);
+                                    window.location.href = tempURL;
                                 }
                             }
                             break;
                         }
                         case "getEvents": {
-                            setStorage();
                             document.getElementById("login").style.display = "none";
                             var events = document.getElementById("events");
-                            events.innerHTML = "<h1>Please Select an Event</h1>";
+                            redirectURL = message.value.serviceChangeRedirectURL;
+
+                            if(message.value.events.length > 0) {
+                                events.innerHTML = "<h1>Please Select an Event</h1>";
     
-                            for (var i in message.value) {
-                                var element = document.createElement("div");
-                                element.classList.add("serviceButton");
-                                element.innerHTML += "<h2>" + message.value[i].title + "</h2>";
-                                element.innerHTML += "<p>" + new Date(message.value[i].startDate).toDateString() + "</p>";
-                                element.setAttribute("id", message.value[i]._id);
-                                element.setAttribute("planId", message.value[i].plans[0]._id);
-                                element.onclick = function (event) {
-                                    setPlanId = event.target.getAttribute("planId") || event.target.parentElement.getAttribute("planId");
+                                for (var i in message.value.events) {
+                                    var element = document.createElement("div");
+                                    element.classList.add("serviceButton");
+                                    element.innerHTML += "<h2>" + message.value.events[i].title + "</h2>";
+                                    element.innerHTML += "<p>" + new Date(message.value.events[i].startDate).toDateString() + "</p>";
+                                    element.setAttribute("id", message.value.events[i]._id);
+                                    element.setAttribute("planId", message.value.events[i].plans[0]._id);
+                                    element.onclick = function (event) {
+                                        setPlanId = event.target.getAttribute("planId") || event.target.parentElement.getAttribute("planId");
+                                        setEventId = event.target.getAttribute("id") || event.target.parentElement.getAttribute("id");
+                                        send(JSON.stringify({
+                                            "password": document.getElementById("password").value,
+                                            "function": "fluro",
+                                            "command": "setEvent",
+                                            "value": event.target.getAttribute("id") || event.target.parentElement.getAttribute("id")
+                                        }));
+                                    }
+                                    events.appendChild(element);
+                                }
+        
+                                var clearButton = document.createElement("div");
+                                clearButton.classList.add("serviceButton");
+                                clearButton.innerHTML += "<h2>Clear Clock</h2>";
+                                clearButton.innerHTML += "<p></p>";
+                                clearButton.onclick = function (event) {
                                     send(JSON.stringify({
                                         "password": document.getElementById("password").value,
                                         "function": "fluro",
-                                        "command": "setEvent",
-                                        "value": event.target.getAttribute("id") || event.target.parentElement.getAttribute("id")
+                                        "command": "clearClock",
+                                        "value": ""
                                     }));
                                 }
-                                events.appendChild(element);
+                                events.appendChild(clearButton);
                             }
-    
-                            var clearButton = document.createElement("div");
-                            clearButton.classList.add("serviceButton");
-                            clearButton.innerHTML += "<h2>Clear Clock</h2>";
-                            clearButton.innerHTML += "<p></p>";
-                            clearButton.onclick = function (event) {
-                                send(JSON.stringify({
-                                    "password": document.getElementById("password").value,
-                                    "function": "fluro",
-                                    "command": "clearClock",
-                                    "value": ""
-                                }));
+                            else {
+                                events.innerHTML = "<h1>There are no events to select</h1>";
                             }
-                            events.appendChild(clearButton);
                             break;
                         }
                     }

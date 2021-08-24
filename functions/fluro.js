@@ -24,7 +24,10 @@ module.exports = function () {
 
                         //Do a fluro API call to get all events within the set realm or all realms
                         this.getEvents().then((result) => {
-                            callback(result);
+                            callback({
+                                events: result,
+                                serviceChangeRedirectURL: self.serviceChangeRedirectURL
+                            });
                         }).catch((error) => {
                             console.log(error);
                             callback("Something happened.. Please try again");
@@ -149,6 +152,12 @@ module.exports = function () {
                             description: "The timezone to set",
                             value: this.timezone,
                             type: "text"
+                        },
+                        serviceChangeRedirectURL: {
+                            title: "Service Change Redirect URL",
+                            description: "What URL should the setFluroClock.html page redirect the user to when the clock is updated? In format http://url.com/blah?id=<eventId/planId> where eventId will populate the event ID and planId will populate the plan ID",
+                            value: this.serviceChangeRedirectURL,
+                            type: "text"
                         }
                     });
                     return true;
@@ -187,9 +196,12 @@ module.exports = function () {
                         if (message.value["timezone"] === undefined || message.value["timezone"] == "unchanged") {
                             message.value["timezone"] = this.timezone;
                         }
+                        if (message.value["serviceChangeRedirectURL"] === undefined || message.value["serviceChangeRedirectURL"] == "unchanged") {
+                            message.value["serviceChangeRedirectURL"] = this.serviceChangeRedirectURL;
+                        }
 
                         //Attempt to write the settings
-                        this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], message.value["roomIDs"], message.value["timezone"], function (success) {
+                        this.writeSettings(message.value["enabled"], message.value["apiKey"], message.value["realmId"], message.value["track"], message.value["date"], message.value["eventID"], message.value["planID"], message.value["roomIDs"], message.value["timezone"], message.value["serviceChangeRedirectURL"], function (success) {
                             if (success == true) {
                                 self.parent.emit("information", self.parent.generateInformationEvent(self.function, "configurationSuccess", "Saved successfully"));
                                 self.parent.emit("control", self.parent.generateControlEvent("exit", "Restarting process on settings change"));
@@ -216,7 +228,7 @@ module.exports = function () {
         this.getEvents = function (realmId, roomIds) {
             var self = this;
             return new Promise((resolve, reject) => {
-                var dateRangeHours = 24 * 3;
+                var dateRangeHours = 24 * 90;
                 self.fluro.content.filter("event", {
                     select: "plans",
                     allDefinitions: true,
@@ -499,13 +511,13 @@ module.exports = function () {
     this.writeSettingsPrompt = function () {
         var object = this;
         callback = function (values, callback) {
-            object.writeSettings("true", values[0], values[1], values[2], values[3], values[4], values[5], callback);
+            object.writeSettings("true", values[0], values[1], values[2], values[3], values[4], values[5], values[6], values[7], values[8], callback);
         }
-        return { "values": ["API Key", "Realm", "Track", "Date", "eventID", "planID"], "callback": callback };
+        return { "values": ["API Key", "Realm", "Track", "Date", "eventID", "planID", "roomIDs", "timezone", "serviceChangeRedirectURL"], "callback": callback };
     }
 
     //Write the current settings to file
-    this.writeSettings = function (enabled, apiKey, realm, track, date, eventID, planID, roomIDs, timezone, callback) {
+    this.writeSettings = function (enabled, apiKey, realm, track, date, eventID, planID, roomIDs, timezone, serviceChangeRedirectURL, callback) {
         var object = this;
         var settings = "Church Clocks Fluro Configuration File\n\n";
         settings += "enabled=" + (enabled || "false") + "\n";
@@ -517,6 +529,7 @@ module.exports = function () {
         settings += "planID=" + (planID || "") + "\n";
         settings += "roomIDs=" + (roomIDs || "") + "\n";
         settings += "timezone=" + (timezone || "Melbourne/Australia") + "\n";
+        settings += "serviceChangeRedirectURL=" + (serviceChangeRedirectURL || "") + "\n";
 
         fs.writeFile(this.filePath + "fluroSettings.txt", settings, "utf-8", function (err) {
             if (err) { object.parent.emit("error", object.parent.generateErrorState(object.function, "critical", "Failed to read/write the settings file")); if (callback) { callback(false); } }
@@ -541,6 +554,7 @@ module.exports = function () {
                 object.planID = data.toString().split("planID=")[1].split("\n")[0];
                 object.roomIds = data.toString().split("roomIDs=")[1].split("\n")[0];
                 object.timezone = data.toString().split("timezone=")[1].split("\n")[0];
+                object.serviceChangeRedirectURL = data.toString().split("serviceChangeRedirectURL=")[1].split("\n")[0];
 
 
                 if (object.apiKey === undefined || object.realm === undefined) {
@@ -553,7 +567,7 @@ module.exports = function () {
             }
             catch (e) {
                 object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
-                object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
+                object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
                     if (success == true) {
                         object.readSettings(object, callback);
                     }
@@ -564,7 +578,7 @@ module.exports = function () {
             switch (e.code) {
                 case "ENOENT": {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
-                    object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
+                    object.writeSettings("false", undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, function (success) {
                         if (success == true) {
                             object.readSettings(object, callback);
                         }
