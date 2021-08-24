@@ -257,7 +257,7 @@ module.exports = function () {
                     object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file was corrupt so it has been recreated"));
                     object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>", function(success) {
                         if(success == true) {
-                            object.readSettings(object, callback);
+                            object.readSettings(callback);
                         }
                     });
                 }
@@ -268,7 +268,7 @@ module.exports = function () {
                         object.parent.emit("error", object.parent.generateErrorState(object.function, "warning", "Settings file didn't exist, creating it"));
                         object.writeSettings(false, "<YOUR_IP_ADDRESS_HERE>", "<YOUR_PORT_HERE>", "/api/0/", "<YOUR_AUTH_TOKEN_HERE_OR_EMPTY>", function (success) {
                             if (success == true) {
-                                object.readSettings(object, callback);
+                                object.readSettings(callback);
                             }
                             else {
                                 if (callback) { callback(false) };
